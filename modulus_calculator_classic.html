@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Modulus of Elasticity Calculator — Sinisa Svoger 2026 v4_8</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#111;color:#eee;font-family:sans-serif;padding:10px;min-width:900px}
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.title{font-size:14px;font-weight:700;color:#60a5fa}
+.branding{text-align:right;font-size:10.5px;color:#888;line-height:1.55}
+.branding span{color:#aaa;font-weight:500}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+textarea{width:100%;height:110px;background:#1a1a1a;color:#eee;border:1px solid #444;border-radius:4px;padding:6px;font-family:monospace;font-size:12px;resize:vertical}
+.controls{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+button{padding:5px 12px;font-size:12px;cursor:pointer;border-radius:4px;border:1px solid #555;background:#222;color:#eee}
+button:hover{background:#2e2e2e}
+button.primary{background:#2563eb;border-color:#2563eb;color:#fff}
+button.primary:hover{background:#1d4ed8}
+button.red{border-color:#dc2626;color:#f87171}
+button.red:hover{background:#1a0f0f}
+button.green{border-color:#16a34a;color:#4ade80}
+button.green:hover{background:#0f1a10}
+button.tog{border-color:#555;color:#aaa}
+button.tog.on{background:#1e3a5f;border-color:#3b82f6;color:#60a5fa}
+button.tog.fixed-on{background:#2d1a4a;border-color:#a855f7;color:#c084fc}
+.thick-ctrl{display:flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid #444;border-radius:4px}
+.cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px}
+.card{background:#1a1a2e;border-radius:6px;padding:8px 12px}
+.card.blue{background:#1e3a8a}
+.card .lbl{font-size:11px;color:#aaa;margin-bottom:2px}
+.card .val{font-size:15px;font-weight:600;color:#fff;word-break:break-all}
+.card .sub{font-size:11px;color:#777;margin-top:1px}
+.card.blue .lbl,.card.blue .sub{color:#bfdbfe}
+.card.blue .val{font-size:17px;color:#fff}
+#status{font-size:11px;padding:2px 9px;border-radius:4px;background:#78350f;color:#fde68a;display:inline-block}
+#status.ok{background:#14532d;color:#86efac}
+#chartWrap{width:100%;overflow:auto;border-radius:6px;background:#111;margin-bottom:4px}
+canvas{display:block;cursor:crosshair}
+.hint{font-size:11px;color:#555;text-align:center;margin-top:3px}
+.tbl{border:1px solid #222;border-radius:4px;max-height:140px;overflow-y:auto;margin-top:8px}
+table{width:100%;font-size:12px;border-collapse:collapse}
+th{padding:4px 8px;color:#666;border-bottom:1px solid #222;text-align:left;background:#0d0d0d;position:sticky;top:0}
+td{padding:3px 8px;color:#ccc;border-bottom:1px solid #1a1a1a;cursor:pointer}
+tr:hover td{background:#1e2a3a}
+tr.s1 td{background:rgba(59,130,246,.3)}
+tr.s2 td{background:rgba(239,68,68,.3)}
+#msg{font-size:11px}
+input[type=file]{display:none}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="title">Modulus of Elasticity Calculator</div>
+  <div class="branding">
+    <span>Sinisa Svoger 2026 v4_8</span><br>
+    Faculty of Mechanical Engineering<br>
+    University of Maribor
+  </div>
+</div>
+
+<div class="row">
+  <div><div style="font-size:11px;color:#888;margin-bottom:3px">Strain ε (%)</div>
+    <textarea id="eIn" placeholder="0.001&#10;0.005&#10;..."></textarea></div>
+  <div><div style="font-size:11px;color:#888;margin-bottom:3px">Stress σ (MPa)</div>
+    <textarea id="sIn" placeholder="50&#10;250&#10;..."></textarea></div>
+</div>
+
+<div class="controls">
+  <button class="primary" onclick="doPlot()">Plot spline</button>
+  <button onclick="doDemo()">Load demo</button>
+  <button class="red" onclick="doClear()">Clear</button>
+  <button class="green" onclick="doSave()">💾 Save</button>
+  <button class="green" onclick="document.getElementById('fileIn').click()">📂 Open</button>
+  <input type="file" id="fileIn" accept=".json" onchange="doLoad(event)">
+  <div class="thick-ctrl">
+    <span style="font-size:11px;color:#888">Thickness</span>
+    <input id="sl" type="range" min="0.1" max="10" step="0.1" value="1" style="width:80px" oninput="onSlider()">
+    <input id="slNum" type="number" min="0.1" max="10" step="0.1" value="1"
+      style="width:52px;font-size:12px;padding:2px 4px;background:#1a1a1a;color:#eee;border:1px solid #444;border-radius:3px"
+      oninput="onNum()">
+    <span style="font-size:11px;color:#666">px</span>
+  </div>
+  <button id="btnDots" class="tog" onclick="toggleDots()">Show dots</button>
+  <button id="btnFixed" class="tog" onclick="toggleFixed()">🔒 Fixed 1:1 (1%=1MPa)</button>
+  <span id="msg"></span>
+</div>
+
+<div class="cards">
+  <div class="card">
+    <div class="lbl">● Point 1</div>
+    <div class="val" id="v1">—</div>
+    <div class="sub" id="s1">click chart or table</div>
+  </div>
+  <div class="card">
+    <div class="lbl">● Point 2</div>
+    <div class="val" id="v2">—</div>
+    <div class="sub" id="s2">click chart or table</div>
+  </div>
+  <div class="card blue">
+    <div class="lbl">E = (Δσ / Δε) × 100</div>
+    <div class="val" id="vE">—</div>
+    <div class="sub" id="sE">MPa</div>
+  </div>
+</div>
+
+<div class="controls" style="margin-bottom:6px">
+  <span id="status">Enter data and click Plot spline</span>
+  <button id="btnRZ" onclick="resetZoom()" style="display:none">Reset zoom</button>
+  <button onclick="resetPts()" style="margin-left:auto">Reset points</button>
+</div>
+
+<div id="chartWrap">
+  <canvas id="cv"></canvas>
+</div>
+<div class="hint" id="hint" style="display:none">🖱 Scroll to zoom · Drag to pan · Click point to select</div>
+
+<div style="font-size:11px;color:#777;margin-top:8px;margin-bottom:3px">Data points</div>
+<div class="tbl">
+  <table><thead><tr><th>#</th><th>Strain ε (%)</th><th>Stress σ (MPa)</th></tr></thead>
+  <tbody id="tb"></tbody></table>
+</div>
+
+<script>
+var cv  = document.getElementById('cv');
+var cx  = cv.getContext('2d');
+
+// ── state ──────────────────────────────────────────────────
+var raw=[], sel=[null,null], mode=0, spPts=[];
+var showDots  = false;
+var fixedMode = false;
+
+// Margins (px)
+var M = {l:88, r:20, t:20, b:62};
+
+// In FREE mode: view is vX/vY data ranges, canvas = container width × 640px
+// In FIXED mode: origin=(0,0) locked. Scale = pxPerUnit px per data unit.
+//   canvas size auto-computed. vX.min=0 always, vY.min=0 always.
+var pxPerUnit = 50;   // px per 1 unit (1% or 1MPa) in fixed mode
+
+// free-mode view
+var vX={min:0,max:10}, vY={min:0,max:10};
+var fX={min:0,max:10}, fY={min:0,max:10};
+
+// pan state
+var panning=false, panStart=null, panSnap=null;
+
+// ── canvas sizing ──────────────────────────────────────────
+function sizeCanvas(){
+  var wrap = document.getElementById('chartWrap');
+  if(fixedMode){
+    // canvas exactly covers 0..maxX and 0..maxY at pxPerUnit scale
+    // We show data range plus some padding
+    var maxX = fX.max;
+    var maxY = fY.max;
+    var W = Math.round(maxX * pxPerUnit) + M.l + M.r;
+    var H = Math.round(maxY * pxPerUnit) + M.t + M.b;
+    cv.width  = Math.max(W, 400);
+    cv.height = Math.max(H, 300);
+    wrap.style.height = Math.min(cv.height, 700) + 'px';
+    wrap.style.overflowX = 'auto';
+    wrap.style.overflowY = 'auto';
+  } else {
+    cv.width  = wrap.offsetWidth || 1200;
+    cv.height = 640;
+    wrap.style.height = '640px';
+    wrap.style.overflowX = 'hidden';
+    wrap.style.overflowY = 'hidden';
+  }
+}
+
+window.addEventListener('resize', function(){ if(!fixedMode){ sizeCanvas(); draw(); } });
+
+// ── coord helpers ──────────────────────────────────────────
+// In fixed mode: origin (0,0) maps to pixel (M.l, cv.height-M.b).
+// In free mode:  vX/vY map to full plot area.
+
+function vx2p(v){
+  if(fixedMode) return M.l + v * pxPerUnit;
+  return M.l + (v - vX.min)/(vX.max - vX.min) * (cv.width - M.l - M.r);
+}
+function vy2p(v){
+  if(fixedMode) return cv.height - M.b - v * pxPerUnit;
+  return cv.height - M.b - (v - vY.min)/(vY.max - vY.min) * (cv.height - M.t - M.b);
+}
+function dx2v(px){
+  if(fixedMode) return (px - M.l) / pxPerUnit;
+  return vX.min + (px - M.l)/(cv.width - M.l - M.r) * (vX.max - vX.min);
+}
+function dy2v(py){
+  if(fixedMode) return (cv.height - M.b - py) / pxPerUnit;
+  return vY.min + (cv.height - M.b - py)/(cv.height - M.t - M.b) * (vY.max - vY.min);
+}
+
+// ── thickness ──────────────────────────────────────────────
+function getThick(){ return Math.max(0.1, parseFloat(document.getElementById('slNum').value)||1); }
+function onSlider(){ document.getElementById('slNum').value = parseFloat(document.getElementById('sl').value).toFixed(1); draw(); }
+function onNum(){ document.getElementById('sl').value = Math.min(10,Math.max(0.1,parseFloat(document.getElementById('slNum').value)||1)); draw(); }
+function toggleDots(){ showDots=!showDots; document.getElementById('btnDots').className=showDots?'tog on':'tog'; draw(); }
+
+// ── fixed mode toggle ──────────────────────────────────────
+function toggleFixed(){
+  fixedMode = !fixedMode;
+  document.getElementById('btnFixed').className = fixedMode ? 'tog fixed-on' : 'tog';
+  pxPerUnit = 50; // reset scale when switching
+  sizeCanvas();
+  draw();
+}
+
+// ── zoom ───────────────────────────────────────────────────
+cv.addEventListener('wheel', function(e){
+  e.preventDefault();
+  if(!raw.length) return;
+  var factor = e.deltaY > 0 ? 1/1.12 : 1.12;
+
+  if(fixedMode){
+    // Scale pxPerUnit — origin stays locked at pixel (M.l, cv.height-M.b)
+    pxPerUnit = Math.max(5, Math.min(2000, pxPerUnit * factor));
+    sizeCanvas();
+    draw();
+  } else {
+    // Free mode: zoom toward cursor
+    var r = cv.getBoundingClientRect();
+    var mx = dx2v(e.clientX - r.left);
+    var my = dy2v(e.clientY - r.top);
+    var f = e.deltaY > 0 ? 1.13 : 1/1.13;
+    vX = {min: mx+(vX.min-mx)*f, max: mx+(vX.max-mx)*f};
+    vY = {min: my+(vY.min-my)*f, max: my+(vY.max-my)*f};
+    draw();
+  }
+},{passive:false});
+
+// ── pan ────────────────────────────────────────────────────
+cv.addEventListener('mousedown', function(e){
+  if(!raw.length) return;
+  panning = false;
+  panStart = {x:e.clientX, y:e.clientY};
+  if(fixedMode){
+    // nothing extra needed — pan handled via container scroll
+  } else {
+    panSnap = {x0:vX.min, x1:vX.max, y0:vY.min, y1:vY.max};
+  }
+});
+cv.addEventListener('mousemove', function(e){
+  if(!panStart) return;
+  var dx = e.clientX - panStart.x, dy = e.clientY - panStart.y;
+  if(Math.abs(dx)>3||Math.abs(dy)>3) panning = true;
+  if(!panning) return;
+  cv.style.cursor = 'grab';
+  if(fixedMode){
+    // In fixed mode, origin is locked — pan is disabled (use scroll bars)
+    return;
+  }
+  var xR = panSnap.x1-panSnap.x0, yR = panSnap.y1-panSnap.y0;
+  vX = {min:panSnap.x0 - dx/cv.width*xR,  max:panSnap.x1 - dx/cv.width*xR};
+  vY = {min:panSnap.y0 + dy/cv.height*yR, max:panSnap.y1 + dy/cv.height*yR};
+  draw();
+});
+window.addEventListener('mouseup', function(){
+  panStart = null; cv.style.cursor = 'crosshair';
+  setTimeout(function(){ panning=false; },50);
+});
+
+// ── click to pick point ────────────────────────────────────
+cv.addEventListener('click', function(e){
+  if(panning||!raw.length) return;
+  var r = cv.getBoundingClientRect();
+  var mx = e.clientX - r.left, my = e.clientY - r.top;
+  var best=-1, bestD=Infinity;
+  for(var i=0;i<raw.length;i++){
+    var d = Math.hypot(vx2p(raw[i].e)-mx, vy2p(raw[i].s)-my);
+    if(d<bestD){bestD=d;best=i;}
+  }
+  if(best>=0&&bestD<22) pick(best);
+});
+
+// ── nice tick helper ───────────────────────────────────────
+function niceTicks(min, max, maxCount){
+  maxCount = maxCount||12;
+  var steps=[0.00001,0.00002,0.00005,0.0001,0.0002,0.0005,0.001,0.002,0.005,
+             0.01,0.02,0.05,0.1,0.2,0.5,1,2,5,10,20,25,50,100,200,500,1000,2000,5000,10000];
+  var step=1;
+  for(var k=0;k<steps.length;k++){
+    step=steps[k];
+    if(Math.ceil((max-min)/step)+1<=maxCount) break;
+  }
+  var dec=Math.max(0,-Math.floor(Math.log10(step))+1);
+  var start=Math.floor(min/step)*step;
+  var ticks=[];
+  for(var v=start; v<=max+step*0.001; v+=step) ticks.push(parseFloat(v.toFixed(dec)));
+  return {step:step, ticks:ticks};
+}
+
+// ── fmt ────────────────────────────────────────────────────
+function fmt(v){
+  if(v===0) return '0';
+  if(Math.abs(v)<0.0001) return v.toExponential(3);
+  if(Math.abs(v)>=1e7)   return v.toExponential(3);
+  return parseFloat(v.toPrecision(7)).toString();
+}
+
+// ── DRAW ───────────────────────────────────────────────────
+function draw(){
+  var W=cv.width, H=cv.height;
+  cx.clearRect(0,0,W,H);
+  cx.fillStyle='#161616'; cx.fillRect(0,0,W,H);
+
+  // plot area bounds in pixels
+  var px0=M.l, px1=W-M.r, py0=M.t, py1=H-M.b;
+  cx.fillStyle='#1a1a1a'; cx.fillRect(px0,py0,px1-px0,py1-py0);
+
+  // determine visible data range
+  var xMin, xMax, yMin, yMax;
+  if(fixedMode){
+    xMin=0; xMax=(px1-px0)/pxPerUnit;
+    yMin=0; yMax=(py1-py0)/pxPerUnit;
+  } else {
+    xMin=vX.min; xMax=vX.max; yMin=vY.min; yMax=vY.max;
+  }
+
+  // compute ticks
+  var xT = niceTicks(xMin, xMax, fixedMode?999:14);
+  var yT = niceTicks(yMin, yMax, fixedMode?999:12);
+
+  // in fixed mode enforce SAME step on both axes for true 1:1 appearance
+  if(fixedMode){
+    var cs = Math.max(xT.step, yT.step);
+    var dec = Math.max(0,-Math.floor(Math.log10(cs))+1);
+    var mkTicks=function(min,max,s,d){
+      var t=[],v=Math.floor(min/s)*s;
+      for(;v<=max+s*0.001;v+=s) t.push(parseFloat(v.toFixed(d)));
+      return t;
+    };
+    xT.step=cs; xT.ticks=mkTicks(xMin,xMax,cs,dec);
+    yT.step=cs; yT.ticks=mkTicks(yMin,yMax,cs,dec);
+  }
+
+  cx.setLineDash([]);
+
+  // X grid + ticks
+  cx.font='bold 15px sans-serif';
+  for(var i=0;i<xT.ticks.length;i++){
+    var v=xT.ticks[i];
+    var px=vx2p(v);
+    if(px<px0-1||px>px1+1) continue;
+    cx.strokeStyle='rgba(255,255,255,0.06)'; cx.lineWidth=0.7;
+    cx.beginPath(); cx.moveTo(px,py0); cx.lineTo(px,py1); cx.stroke();
+    cx.strokeStyle='#555'; cx.lineWidth=1;
+    cx.beginPath(); cx.moveTo(px,py1); cx.lineTo(px,py1+7); cx.stroke();
+    cx.fillStyle='#ddd'; cx.textAlign='center';
+    cx.fillText(fmt(v), px, py1+22);
+  }
+
+  // Y grid + ticks
+  cx.font='bold 15px sans-serif';
+  for(var i=0;i<yT.ticks.length;i++){
+    var v=yT.ticks[i];
+    var py=vy2p(v);
+    if(py<py0-1||py>py1+1) continue;
+    cx.strokeStyle='rgba(255,255,255,0.06)'; cx.lineWidth=0.7;
+    cx.beginPath(); cx.moveTo(px0,py); cx.lineTo(px1,py); cx.stroke();
+    cx.strokeStyle='#555'; cx.lineWidth=1;
+    cx.beginPath(); cx.moveTo(px0,py); cx.lineTo(px0-7,py); cx.stroke();
+    cx.fillStyle='#ddd'; cx.textAlign='right';
+    cx.fillText(fmt(v), px0-11, py+5);
+  }
+
+  // highlight origin in fixed mode
+  if(fixedMode){
+    var ox=vx2p(0), oy=vy2p(0);
+    if(ox>=px0&&ox<=px1&&oy>=py0&&oy<=py1){
+      cx.strokeStyle='rgba(168,85,247,0.6)'; cx.lineWidth=1; cx.setLineDash([3,3]);
+      cx.beginPath(); cx.moveTo(ox,py0); cx.lineTo(ox,py1); cx.stroke();
+      cx.beginPath(); cx.moveTo(px0,oy); cx.lineTo(px1,oy); cx.stroke();
+      cx.setLineDash([]);
+    }
+  }
+
+  // axis border
+  cx.strokeStyle='#444'; cx.lineWidth=1; cx.setLineDash([]);
+  cx.strokeRect(px0,py0,px1-px0,py1-py0);
+
+  // axis labels
+  cx.fillStyle='#aaa'; cx.font='bold 14px sans-serif'; cx.textAlign='center';
+  cx.fillText('ε (%)', px0+(px1-px0)/2, H-4);
+  cx.save(); cx.translate(14, py0+(py1-py0)/2); cx.rotate(-Math.PI/2);
+  cx.fillText('σ (MPa)',0,0); cx.restore();
+
+  // fixed mode badge on chart
+  if(fixedMode){
+    cx.fillStyle='rgba(168,85,247,0.18)'; cx.fillRect(px0,py0,px1-px0,py1-py0);
+    cx.fillStyle='#c084fc'; cx.font='bold 11px sans-serif'; cx.textAlign='right';
+    cx.fillText('🔒 1% = 1 MPa  ('+pxPerUnit.toFixed(0)+'px/unit)', px1-6, py0+16);
+  }
+
+  if(!raw.length){ return; }
+
+  // clip
+  cx.save();
+  cx.beginPath(); cx.rect(px0,py0,px1-px0,py1-py0); cx.clip();
+
+  // tangent line
+  if(sel[0]&&sel[1]){
+    var ab=[sel[0],sel[1]].slice().sort(function(a,b){return a.e-b.e;});
+    var pa=ab[0],pb=ab[1],slp=(pb.s-pa.s)/(pb.e-pa.e);
+    var span=(fixedMode?xMax:vX.max)-(fixedMode?xMin:vX.min);
+    var x0=pa.e-span*0.15, x1=pb.e+span*0.15;
+    cx.strokeStyle='#f59e0b'; cx.lineWidth=1.5; cx.setLineDash([7,4]);
+    cx.beginPath();
+    cx.moveTo(vx2p(x0), vy2p(pa.s+slp*(x0-pa.e)));
+    cx.lineTo(vx2p(x1), vy2p(pa.s+slp*(x1-pa.e)));
+    cx.stroke(); cx.setLineDash([]);
+  }
+
+  // spline
+  if(spPts.length>1){
+    cx.strokeStyle='#60a5fa'; cx.lineWidth=getThick();
+    cx.lineJoin='round'; cx.lineCap='round'; cx.setLineDash([]);
+    cx.beginPath();
+    var lpx=null,lpy=null,started=false;
+    for(var i=0;i<spPts.length;i++){
+      var ppx=vx2p(spPts[i].x)|0, ppy=vy2p(spPts[i].y)|0;
+      if(ppx===lpx&&ppy===lpy) continue;
+      lpx=ppx; lpy=ppy;
+      if(!started){cx.moveTo(ppx,ppy);started=true;} else cx.lineTo(ppx,ppy);
+    }
+    cx.stroke();
+  }
+
+  // dots
+  if(showDots){
+    for(var i=0;i<raw.length;i++){
+      var is1=sel[0]&&sel[0].i===i, is2=sel[1]&&sel[1].i===i;
+      if(!is1&&!is2){
+        cx.beginPath(); cx.arc(vx2p(raw[i].e),vy2p(raw[i].s),2,0,Math.PI*2);
+        cx.fillStyle='rgba(96,165,250,0.4)'; cx.fill();
+      }
+    }
+  }
+
+  // selected points
+  for(var i=0;i<raw.length;i++){
+    var is1=sel[0]&&sel[0].i===i, is2=sel[1]&&sel[1].i===i;
+    if(is1||is2){
+      cx.beginPath(); cx.arc(vx2p(raw[i].e),vy2p(raw[i].s),8,0,Math.PI*2);
+      cx.fillStyle=is2?'#ef4444':'#60a5fa'; cx.fill();
+      cx.strokeStyle='#fff'; cx.lineWidth=2; cx.stroke();
+    }
+  }
+  cx.restore();
+}
+
+// ── Catmull-Rom ────────────────────────────────────────────
+function catmullRom(pts){
+  var MAX=400,src=pts;
+  if(pts.length>MAX){
+    var o=[],s=pts.length/MAX;
+    for(var k=0;k<MAX;k++) o.push(pts[Math.round(k*s)]);
+    o.push(pts[pts.length-1]); src=o;
+  }
+  if(src.length<2) return src;
+  var n=6,g0={x:2*src[0].x-src[1].x,y:2*src[0].y-src[1].y};
+  var gN={x:2*src[src.length-1].x-src[src.length-2].x,y:2*src[src.length-1].y-src[src.length-2].y};
+  var a=[g0].concat(src,[gN]),out=[];
+  for(var i=1;i<a.length-2;i++){
+    var p0=a[i-1],p1=a[i],p2=a[i+1],p3=a[i+2];
+    for(var j=(i===1?0:1);j<=n;j++){
+      var t=j/n,t2=t*t,t3=t2*t;
+      out.push({
+        x:.5*((2*p1.x)+(-p0.x+p2.x)*t+(2*p0.x-5*p1.x+4*p2.x-p3.x)*t2+(-p0.x+3*p1.x-3*p2.x+p3.x)*t3),
+        y:.5*((2*p1.y)+(-p0.y+p2.y)*t+(2*p0.y-5*p1.y+4*p2.y-p3.y)*t2+(-p0.y+3*p1.y-3*p2.y+p3.y)*t3)
+      });
+    }
+  }
+  return out;
+}
+
+function nums(t){ return t.trim().split(/[\s,;]+/).map(Number).filter(isFinite); }
+
+// ── plot ───────────────────────────────────────────────────
+function doPlot(){
+  var en=nums(document.getElementById('eIn').value);
+  var sn=nums(document.getElementById('sIn').value);
+  var msg=document.getElementById('msg');
+  if(!en.length||!sn.length){msg.textContent='Fill both fields.';msg.style.color='#f87171';return;}
+  if(en.length!==sn.length){msg.textContent='Mismatch: '+en.length+' vs '+sn.length;msg.style.color='#f87171';return;}
+  if(en.length<2){msg.textContent='Need ≥ 2 pts.';msg.style.color='#f87171';return;}
+  msg.textContent=en.length+' pts loaded'; msg.style.color='#86efac';
+
+  raw=en.map(function(e,i){return{e:e,s:sn[i]};}).sort(function(a,b){return a.e-b.e;});
+  sel=[null,null]; mode=0;
+  spPts=catmullRom(raw.map(function(p){return{x:p.e,y:p.s};}));
+
+  var xs=raw.map(function(p){return p.e;});
+  var ys=raw.map(function(p){return p.s;});
+  var xt=niceTicks(0,Math.max.apply(null,xs)*1.08,14);
+  var yt=niceTicks(0,Math.max.apply(null,ys)*1.08,12);
+  // fX/fY define the full data extent (used by reset zoom and fixed canvas size)
+  fX={min:0, max:xt.ticks[xt.ticks.length-1]};
+  fY={min:0, max:yt.ticks[yt.ticks.length-1]};
+  vX={min:fX.min,max:fX.max};
+  vY={min:fY.min,max:fY.max};
+
+  pxPerUnit=50; // reset scale
+  sizeCanvas(); buildTable(); draw();
+  document.getElementById('btnRZ').style.display='';
+  document.getElementById('hint').style.display='';
+  setStatus('Click a point on the chart or in the table','');
+  updateCards();
+}
+
+function doDemo(){
+  document.getElementById('eIn').value='0.02\n0.20\n0.50\n1.00\n1.50\n2.00\n2.50\n3.00\n3.50\n4.00\n5.00\n6.00\n7.00\n8.00\n9.00\n10.00\n11.00\n12.00\n13.00';
+  document.getElementById('sIn').value='0.04\n0.40\n0.98\n1.95\n2.90\n4.20\n5.80\n7.00\n7.90\n8.30\n8.55\n8.60\n8.55\n8.50\n8.42\n8.35\n8.25\n8.15\n8.05';
+  doPlot();
+}
+
+function doClear(){
+  document.getElementById('eIn').value=''; document.getElementById('sIn').value='';
+  raw=[]; sel=[null,null]; mode=0; spPts=[];
+  document.getElementById('msg').textContent='';
+  document.getElementById('tb').innerHTML='';
+  ['v1','v2','vE'].forEach(function(id){document.getElementById(id).textContent='—';});
+  document.getElementById('s1').textContent='click chart or table';
+  document.getElementById('s2').textContent='click chart or table';
+  document.getElementById('sE').textContent='MPa';
+  document.getElementById('btnRZ').style.display='none';
+  document.getElementById('hint').style.display='none';
+  setStatus('Enter data and click Plot spline','');
+  sizeCanvas(); draw();
+}
+
+// ── save / load ────────────────────────────────────────────
+function doSave(){
+  var eVals=document.getElementById('eIn').value.trim();
+  var sVals=document.getElementById('sIn').value.trim();
+  if(!eVals||!sVals){document.getElementById('msg').textContent='Nothing to save.';document.getElementById('msg').style.color='#f87171';return;}
+  var p={version:'modulus_v4_8',author:'Sinisa Svoger',saved:new Date().toISOString(),
+    strain:eVals,stress:sVals,
+    sel0:sel[0]?{e:sel[0].e,s:sel[0].s,i:sel[0].i}:null,
+    sel1:sel[1]?{e:sel[1].e,s:sel[1].s,i:sel[1].i}:null};
+  var blob=new Blob([JSON.stringify(p,null,2)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='modulus_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  document.getElementById('msg').textContent='Saved!'; document.getElementById('msg').style.color='#4ade80';
+  setTimeout(function(){document.getElementById('msg').textContent='';},2000);
+}
+
+function doLoad(event){
+  var file=event.target.files[0]; if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var d=JSON.parse(e.target.result);
+      if(!d.strain||!d.stress) throw new Error('bad');
+      document.getElementById('eIn').value=d.strain;
+      document.getElementById('sIn').value=d.stress;
+      doPlot();
+      if(d.sel0&&d.sel0.i!=null&&d.sel0.i<raw.length) sel[0]={e:raw[d.sel0.i].e,s:raw[d.sel0.i].s,i:d.sel0.i};
+      if(d.sel1&&d.sel1.i!=null&&d.sel1.i<raw.length) sel[1]={e:raw[d.sel1.i].e,s:raw[d.sel1.i].s,i:d.sel1.i};
+      updateCards(); draw();
+      document.getElementById('msg').textContent='Loaded: '+file.name; document.getElementById('msg').style.color='#4ade80';
+      setTimeout(function(){document.getElementById('msg').textContent='';},3000);
+    }catch(err){document.getElementById('msg').textContent='Error reading file.';document.getElementById('msg').style.color='#f87171';}
+    event.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+// ── table / pick ───────────────────────────────────────────
+function buildTable(){
+  var tb=document.getElementById('tb'); tb.innerHTML='';
+  raw.forEach(function(p,i){
+    var tr=document.createElement('tr'); tr.id='r'+i;
+    tr.innerHTML='<td>'+(i+1)+'</td><td>'+fmt(p.e)+'</td><td>'+fmt(p.s)+'</td>';
+    (function(idx){tr.onclick=function(){pick(idx);};})(i);
+    tb.appendChild(tr);
+  });
+}
+function pick(i){
+  sel[mode]={e:raw[i].e,s:raw[i].s,i:i};
+  mode=mode===0?1:0;
+  updateCards(); draw();
+}
+function resetPts(){
+  sel=[null,null]; mode=0;
+  setStatus(raw.length?'Click a point on the chart or in the table':'Enter data and click Plot spline','');
+  updateCards(); draw();
+}
+function resetZoom(){
+  pxPerUnit=50;
+  vX={min:fX.min,max:fX.max}; vY={min:fY.min,max:fY.max};
+  sizeCanvas(); draw();
+}
+function setStatus(txt,cls){
+  var el=document.getElementById('status'); el.textContent=txt; el.className=cls||'';
+}
+function updateCards(){
+  document.getElementById('v1').textContent=sel[0]?'ε='+fmt(sel[0].e)+'%  σ='+fmt(sel[0].s)+' MPa':'—';
+  document.getElementById('s1').textContent=sel[0]?'point '+(sel[0].i+1):'click chart or table';
+  document.getElementById('v2').textContent=sel[1]?'ε='+fmt(sel[1].e)+'%  σ='+fmt(sel[1].s)+' MPa':'—';
+  document.getElementById('s2').textContent=sel[1]?'point '+(sel[1].i+1):'click chart or table';
+  if(sel[0]&&sel[1]){
+    var de=sel[1].e-sel[0].e,ds=sel[1].s-sel[0].s;
+    if(Math.abs(de)<1e-14){document.getElementById('vE').textContent='Δε≈0';document.getElementById('sE').textContent='';}
+    else{document.getElementById('vE').textContent=fmt((ds/de)*100)+' MPa';document.getElementById('sE').textContent='E = (Δσ / Δε) × 100';}
+    setStatus('E calculated — adjust points if needed','ok');
+  } else {
+    document.getElementById('vE').textContent='—'; document.getElementById('sE').textContent='MPa';
+    if(sel[0]) setStatus('Point 1 set — click point 2','');
+  }
+  raw.forEach(function(_,i){
+    var tr=document.getElementById('r'+i); if(!tr) return;
+    tr.className=(sel[0]&&sel[0].i===i)?'s1':(sel[1]&&sel[1].i===i)?'s2':'';
+  });
+}
+
+// initial draw
+sizeCanvas(); draw();
+</script>
+</body>
+</html>
