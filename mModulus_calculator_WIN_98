@@ -1,0 +1,1821 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Modulus of Elasticity Analyzer v4.8</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{
+  background:#008080;
+  font-family:Arial,sans-serif;
+  font-size:11px;
+  color:#000;
+  min-width:960px;
+  padding:6px;
+}
+
+/* ── Windows classic 3D bevel helpers ── */
+.raised{
+  border-top:2px solid #fff;
+  border-left:2px solid #fff;
+  border-right:2px solid #808080;
+  border-bottom:2px solid #808080;
+}
+.sunken{
+  border-top:2px solid #808080;
+  border-left:2px solid #808080;
+  border-right:2px solid #fff;
+  border-bottom:2px solid #fff;
+}
+.raised-sm{
+  border-top:1px solid #fff;
+  border-left:1px solid #fff;
+  border-right:1px solid #808080;
+  border-bottom:1px solid #808080;
+}
+
+/* ── Main window ── */
+.win-window{
+  background:#d4d0c8;
+  border-top:2px solid #fff;
+  border-left:2px solid #fff;
+  border-right:2px solid #808080;
+  border-bottom:2px solid #808080;
+  padding:3px;
+}
+
+/* ── Title bar ── */
+.win-titlebar{
+  background:linear-gradient(to right,#000080,#1084d0);
+  color:#fff;
+  font-size:12px;
+  font-weight:bold;
+  padding:3px 6px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:4px;
+  user-select:none;
+}
+.win-titlebar .icon{
+  width:14px;height:14px;
+  background:#d4d0c8;
+  border:1px solid #000;
+  margin-right:5px;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:9px;
+}
+.win-titlebar .title-left{display:flex;align-items:center}
+.win-title-btns{display:flex;gap:2px}
+.win-title-btn{
+  width:16px;height:14px;
+  background:#d4d0c8;
+  border-top:1px solid #fff;border-left:1px solid #fff;
+  border-right:1px solid #808080;border-bottom:1px solid #808080;
+  font-size:9px;font-weight:bold;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  color:#000;
+}
+
+/* ── Menu bar ── */
+.menubar{
+  background:#d4d0c8;
+  border-bottom:1px solid #808080;
+  padding:2px 4px;
+  display:flex;gap:0;
+  margin-bottom:4px;
+}
+.menu-item{
+  padding:2px 8px;
+  font-size:11px;
+  cursor:pointer;
+  color:#000;
+  text-decoration:none;
+}
+.menu-item:hover{
+  background:#000080;color:#fff;
+}
+
+/* ── Toolbar ── */
+.toolbar{
+  background:#d4d0c8;
+  border-top:1px solid #fff;
+  border-left:1px solid #fff;
+  border-right:1px solid #808080;
+  border-bottom:1px solid #808080;
+  padding:3px 4px;
+  display:flex;
+  gap:4px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin-bottom:4px;
+}
+.toolbar-sep{
+  width:1px;height:22px;
+  border-left:1px solid #808080;
+  border-right:1px solid #fff;
+  margin:0 2px;
+}
+
+/* ── Buttons ── */
+.btn{
+  font-family:Arial,sans-serif;
+  font-size:11px;
+  padding:3px 10px;
+  background:#d4d0c8;
+  color:#000;
+  border-top:2px solid #fff;
+  border-left:2px solid #fff;
+  border-right:2px solid #808080;
+  border-bottom:2px solid #808080;
+  cursor:pointer;
+  min-width:70px;
+  white-space:nowrap;
+  display:inline-block;
+  text-align:center;
+}
+.btn:hover{background:#e4e0d8}
+.btn:active{
+  border-top:2px solid #808080;border-left:2px solid #808080;
+  border-right:2px solid #fff;border-bottom:2px solid #fff;
+  padding:4px 9px 2px 11px;
+}
+.btn.default{border:3px solid #000; padding:2px 8px}
+.btn.default:active{padding:3px 7px 1px 9px}
+.btn-small{
+  font-family:Arial,sans-serif;font-size:11px;
+  padding:2px 6px;background:#d4d0c8;color:#000;
+  border-top:1px solid #fff;border-left:1px solid #fff;
+  border-right:1px solid #808080;border-bottom:1px solid #808080;
+  cursor:pointer;white-space:nowrap;display:inline-block;
+}
+.btn-small:active{
+  border-top:1px solid #808080;border-left:1px solid #808080;
+  border-right:1px solid #fff;border-bottom:1px solid #fff;
+}
+.btn-small.toggled{
+  border-top:1px solid #808080;border-left:1px solid #808080;
+  border-right:1px solid #fff;border-bottom:1px solid #fff;
+  background:#c4c0b8;
+}
+
+/* ── Toolbar icon buttons ── */
+.tbtn{
+  width:24px;height:22px;
+  background:#d4d0c8;
+  border-top:1px solid #fff;border-left:1px solid #fff;
+  border-right:1px solid #808080;border-bottom:1px solid #808080;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:13px;
+}
+.tbtn:hover{background:#e8e4dc}
+.tbtn:active,.tbtn.on{
+  border-top:1px solid #808080;border-left:1px solid #808080;
+  border-right:1px solid #fff;border-bottom:1px solid #fff;
+  background:#c4c0b8;
+}
+
+/* ── Group box ── */
+.groupbox{
+  border:1px solid #808080;
+  border-top:1px solid #808080;
+  padding:8px 8px 6px 8px;
+  margin-bottom:6px;
+  position:relative;
+  background:#d4d0c8;
+}
+.groupbox-title{
+  position:absolute;top:-7px;left:8px;
+  background:#d4d0c8;
+  padding:0 4px;
+  font-size:11px;font-weight:bold;
+  color:#000;
+}
+
+/* ── Input fields ── */
+textarea, input[type=text], input[type=number]{
+  font-family:'Courier New',monospace;
+  font-size:11px;
+  background:#fff;
+  color:#000;
+  border-top:2px solid #808080;border-left:2px solid #808080;
+  border-right:2px solid #fff;border-bottom:2px solid #fff;
+  padding:3px 4px;
+  outline:none;
+  resize:vertical;
+}
+textarea::placeholder{color:#808080}
+input[type=range]{
+  -webkit-appearance:none;
+  height:4px;background:#808080;
+  border-top:1px solid #404040;border-left:1px solid #404040;
+  border-right:1px solid #fff;border-bottom:1px solid #fff;
+  outline:none;cursor:pointer;width:80px;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:11px;height:19px;
+  background:#d4d0c8;
+  border-top:1px solid #fff;border-left:1px solid #fff;
+  border-right:1px solid #808080;border-bottom:1px solid #808080;
+  cursor:pointer;
+}
+input[type=file]{display:none}
+
+/* ── Cards / panels ── */
+.panel{
+  background:#d4d0c8;
+  border-top:1px solid #808080;border-left:1px solid #808080;
+  border-right:1px solid #fff;border-bottom:1px solid #fff;
+  padding:4px 6px;
+}
+.cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:5px}
+.card{background:#d4d0c8;border-top:2px solid #808080;border-left:2px solid #808080;border-right:2px solid #fff;border-bottom:2px solid #fff;padding:0}
+.card .ctitle{background:#000080;color:#fff;font-size:10px;font-weight:bold;padding:2px 5px}
+.card .cval{font-size:13px;font-weight:bold;color:#000;padding:4px 5px;font-family:'Courier New',monospace}
+.card .csub{font-size:10px;color:#444;padding:0 5px 4px}
+.card.result .ctitle{background:#800000;color:#fff}
+.card.result .cval{color:#800000;font-size:15px}
+
+/* ── Status bar ── */
+.statusbar{
+  display:flex;align-items:center;gap:0;
+  border-top:1px solid #808080;border-left:1px solid #808080;
+  border-right:1px solid #fff;border-bottom:1px solid #fff;
+  background:#d4d0c8;
+  margin-bottom:5px;
+}
+.status-pane{
+  flex:1;padding:2px 6px;font-size:11px;
+  border-right:1px solid #808080;
+}
+.status-pane + .status-pane{border-right:none;flex:0;white-space:nowrap}
+#status{color:#000}
+#status.ok{color:#008000}
+
+/* ── Chart ── */
+#chartWrap{
+  width:100%;overflow:auto;margin-bottom:4px;
+  border-top:2px solid #808080;border-left:2px solid #808080;
+  border-right:2px solid #fff;border-bottom:2px solid #fff;
+  background:#fff;
+}
+canvas{display:block;cursor:crosshair}
+
+/* ── Hint ── */
+.hint{font-size:10px;color:#444;text-align:center;margin-top:2px;font-style:italic}
+
+/* ── Table ── */
+.tbl{
+  border-top:2px solid #808080;border-left:2px solid #808080;
+  border-right:2px solid #fff;border-bottom:2px solid #fff;
+  max-height:130px;overflow-y:auto;margin-top:6px;
+}
+table{width:100%;font-size:11px;border-collapse:collapse}
+th{padding:2px 6px;background:#d4d0c8;color:#000;font-weight:bold;
+  border-bottom:1px solid #808080;text-align:left;position:sticky;top:0;
+  border-top:1px solid #fff;border-left:1px solid #fff}
+td{padding:1px 6px;color:#000;border-bottom:1px solid #e8e4dc;cursor:pointer;background:#fff}
+tr:hover td{background:#000080;color:#fff}
+tr.s1 td{background:#c8e0ff;color:#000}
+tr.s2 td{background:#ffc8c8;color:#000}
+
+/* ── Modal dialog ── */
+.win-modal-bg{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.4);align-items:center;justify-content:center}
+.win-modal{
+  background:#d4d0c8;
+  border-top:2px solid #fff;border-left:2px solid #fff;
+  border-right:2px solid #808080;border-bottom:2px solid #808080;
+  padding:3px;min-width:340px;max-width:440px;width:90%;
+}
+.win-modal .win-titlebar{margin-bottom:0}
+.win-modal-body{padding:12px 12px 8px}
+.win-modal label{display:block;font-size:11px;margin-bottom:3px}
+.win-modal-btns{display:flex;gap:6px;justify-content:flex-end;margin-top:12px}
+
+/* ── Branding strip ── */
+.branding-strip{
+  background:#d4d0c8;
+  border-top:1px solid #808080;
+  padding:2px 6px;
+  font-size:10px;color:#444;
+  display:flex;justify-content:space-between;
+  margin-bottom:4px;
+}
+
+/* ── Layout helpers ── */
+.row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
+.flex-row{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+</style>
+</head>
+<body>
+
+<!-- MAIN WINDOW -->
+<div class="win-window">
+
+  <!-- TITLE BAR -->
+  <div class="win-titlebar">
+    <div class="title-left">
+      <span class="icon">📈</span>
+      Modulus of Elasticity Analyzer v4.8
+    </div>
+    <div class="win-title-btns">
+      <div class="win-title-btn">_</div>
+      <div class="win-title-btn">□</div>
+      <div class="win-title-btn" style="font-weight:bold">✕</div>
+    </div>
+  </div>
+
+  <!-- BRANDING STRIP -->
+  <div class="branding-strip">
+    <span>Sinisa Svoger 2026 v4_8 &nbsp;|&nbsp; Faculty of Mechanical Engineering &nbsp;|&nbsp; University of Maribor</span>
+    <span id="msg" style="color:#800000;font-weight:bold"></span>
+  </div>
+
+  <!-- MENU BAR -->
+  <div class="menubar">
+    <span class="menu-item" onclick="doPlot()">File</span>
+    <span class="menu-item" onclick="openSaveDialog()">Save</span>
+    <span class="menu-item" onclick="document.getElementById('fileIn').click()">Open</span>
+    <span class="menu-item">View</span>
+    <span class="menu-item" onclick="doDemo()">Demo</span>
+    <span class="menu-item">Help</span>
+  </div>
+  <input type="file" id="fileIn" accept=".json" onchange="doLoad(event)">
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <!-- Plot -->
+    <div class="tbtn" onclick="doPlot()" title="Plot Spline">📈</div>
+    <div class="tbtn" onclick="doClear()" title="Clear">🗑</div>
+    <div class="toolbar-sep"></div>
+    <!-- Save / Open -->
+    <div class="tbtn" onclick="openSaveDialog()" title="Save">💾</div>
+    <div class="tbtn" onclick="document.getElementById('fileIn').click()" title="Open">📂</div>
+    <div class="toolbar-sep"></div>
+    <!-- Dots toggle -->
+    <div class="tbtn" id="btnDots" onclick="toggleDots()" title="Show/Hide Data Points">⚬</div>
+    <!-- Fixed scale -->
+    <div class="tbtn" id="btnFixed" onclick="toggleFixed()" title="Lock 1:1 Scale (1%=1MPa)">🔒</div>
+    <div class="toolbar-sep"></div>
+    <!-- Reset -->
+    <div class="tbtn" id="btnRZ" onclick="resetZoom()" title="Reset Zoom" style="display:none">🔍</div>
+    <div class="tbtn" onclick="resetPts()" title="Reset Points">✕</div>
+    <div class="toolbar-sep"></div>
+    <!-- Line thickness -->
+    <span style="font-size:10px;color:#444;padding:0 4px">Line:</span>
+    <input id="sl" type="range" min="0.1" max="10" step="0.1" value="1" oninput="onSlider()" title="Line Thickness">
+    <input id="slNum" type="number" min="0.1" max="10" step="0.1" value="1" style="width:42px" oninput="onNum()">
+    <span style="font-size:10px;color:#444">px</span>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div style="display:flex;gap:6px">
+
+    <!-- LEFT: data input -->
+    <div style="width:240px;flex-shrink:0">
+      <div class="groupbox" style="margin-bottom:6px">
+        <span class="groupbox-title">Strain ε (%)</span>
+        <textarea id="eIn" rows="8" style="width:100%" placeholder="0.001&#10;0.005&#10;0.010&#10;..."></textarea>
+      </div>
+      <div class="groupbox">
+        <span class="groupbox-title">Stress σ (MPa)</span>
+        <textarea id="sIn" rows="8" style="width:100%" placeholder="50&#10;250&#10;500&#10;..."></textarea>
+      </div>
+      <div style="margin-top:4px;display:flex;gap:4px">
+        <button class="btn default" onclick="doPlot()" style="flex:1">Plot</button>
+        <button class="btn" onclick="doClear()" style="flex:1">Clear</button>
+      </div>
+    </div>
+
+    <!-- RIGHT: chart + results -->
+    <div style="flex:1;min-width:0">
+
+      <!-- Result cards -->
+      <div class="cards" style="margin-bottom:5px">
+        <div class="card">
+          <div class="ctitle">Point 1 (α)</div>
+          <div class="cval" id="v1">---</div>
+          <div class="csub" id="s1">Click chart or table</div>
+        </div>
+        <div class="card">
+          <div class="ctitle">Point 2 (β)</div>
+          <div class="cval" id="v2">---</div>
+          <div class="csub" id="s2">Click chart or table</div>
+        </div>
+        <div class="card result">
+          <div class="ctitle">Modulus E = (Δσ/Δε)×100</div>
+          <div class="cval" id="vE">---</div>
+          <div class="csub" id="sE">MPa</div>
+        </div>
+      </div>
+
+      <!-- Status bar -->
+      <div class="statusbar">
+        <div class="status-pane" id="status">Ready — enter data and click Plot</div>
+        <div class="status-pane" id="statusRight" style="font-size:10px;color:#444;padding-right:6px"></div>
+      </div>
+
+      <!-- Chart -->
+      <div id="chartWrap">
+        <canvas id="cv"></canvas>
+      </div>
+      <div class="hint" id="hint" style="display:none">Scroll: Zoom &nbsp;|&nbsp; Drag: Pan &nbsp;|&nbsp; Click point: Select</div>
+
+      <!-- Data table -->
+      <div style="font-size:10px;font-weight:bold;color:#444;margin-top:6px;margin-bottom:2px">Data Points</div>
+      <div class="tbl">
+        <table><thead><tr><th>#</th><th>Strain ε (%)</th><th>Stress σ (MPa)</th></tr></thead>
+        <tbody id="tb"></tbody></table>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /win-window -->
+
+<!-- SAVE DIALOG -->
+<div class="win-modal-bg" id="saveModal">
+  <div class="win-modal">
+    <div class="win-titlebar">
+      <div class="title-left"><span class="icon">💾</span> Save As</div>
+      <div class="win-title-btns">
+        <div class="win-title-btn" onclick="closeSaveDialog()">✕</div>
+      </div>
+    </div>
+    <div class="win-modal-body">
+      <label for="saveFilename"><b>File name:</b></label>
+      <input id="saveFilename" type="text" style="width:100%;margin-bottom:8px" placeholder="modulus_data.json">
+      <label style="color:#444;font-size:10px">Save as type: JSON Data File (*.json)</label>
+      <div style="font-size:10px;color:#808080;margin-top:6px;line-height:1.6">
+        To choose the save folder, enable<br>
+        "Ask where to save each file" in your browser's download settings.
+      </div>
+      <div class="win-modal-btns">
+        <button class="btn default" onclick="confirmSave()" style="min-width:80px">Save</button>
+        <button class="btn" onclick="closeSaveDialog()" style="min-width:80px">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var cv  = document.getElementById('cv');
+var cx  = cv.getContext('2d');
+var showDots  = false;
+var fixedMode = false;
+var M = {l:88, r:20, t:20, b:62};
+var pxPerUnit = 50;
+var vX={min:0,max:10}, vY={min:0,max:10};
+var fX={min:0,max:10}, fY={min:0,max:10};
+var raw=[], sel=[null,null], mode=0, spPts=[];
+var panning=false, panStart=null, panSnap=null;
+
+// ── sizing ────────────────────────────────────────────────
+function sizeCanvas(){
+  var wrap=document.getElementById('chartWrap');
+  if(fixedMode){
+    var W=Math.round(fX.max*pxPerUnit)+M.l+M.r;
+    var H=Math.round(fY.max*pxPerUnit)+M.t+M.b;
+    cv.width=Math.max(W,400); cv.height=Math.max(H,300);
+    wrap.style.height=Math.min(cv.height,700)+'px';
+    wrap.style.overflowX='auto'; wrap.style.overflowY='auto';
+  } else {
+    cv.width=wrap.offsetWidth||1200; cv.height=640;
+    wrap.style.height='640px';
+    wrap.style.overflowX='hidden'; wrap.style.overflowY='hidden';
+  }
+}
+window.addEventListener('resize',function(){ if(!fixedMode){sizeCanvas();draw();} });
+
+// ── coords ────────────────────────────────────────────────
+function vx2p(v){ return fixedMode?M.l+v*pxPerUnit:M.l+(v-vX.min)/(vX.max-vX.min)*(cv.width-M.l-M.r); }
+function vy2p(v){ return fixedMode?cv.height-M.b-v*pxPerUnit:cv.height-M.b-(v-vY.min)/(vY.max-vY.min)*(cv.height-M.t-M.b); }
+function dx2v(p){ return fixedMode?(p-M.l)/pxPerUnit:vX.min+(p-M.l)/(cv.width-M.l-M.r)*(vX.max-vX.min); }
+function dy2v(p){ return fixedMode?(cv.height-M.b-p)/pxPerUnit:vY.min+(cv.height-M.b-p)/(cv.height-M.t-M.b)*(vY.max-vY.min); }
+
+// ── controls ──────────────────────────────────────────────
+function getThick(){ return Math.max(0.1,parseFloat(document.getElementById('slNum').value)||1); }
+function onSlider(){ document.getElementById('slNum').value=parseFloat(document.getElementById('sl').value).toFixed(1); draw(); }
+function onNum(){ document.getElementById('sl').value=Math.min(10,Math.max(0.1,parseFloat(document.getElementById('slNum').value)||1)); draw(); }
+function toggleDots(){ showDots=!showDots; document.getElementById('btnDots').className=showDots?'xc-btn tog on':'xc-btn tog'; draw(); }
+function toggleFixed(){ fixedMode=!fixedMode; document.getElementById('btnFixed').className=fixedMode?'xc-btn tog fixed-on':'xc-btn tog'; pxPerUnit=50; sizeCanvas(); draw(); }
+
+// ── zoom / pan ────────────────────────────────────────────
+cv.addEventListener('wheel',function(e){
+  e.preventDefault();
+  if(!raw.length) return;
+  var f=e.deltaY>0?1/1.12:1.12;
+  if(fixedMode){ pxPerUnit=Math.max(5,Math.min(2000,pxPerUnit*f)); sizeCanvas(); draw(); }
+  else{
+    var r=cv.getBoundingClientRect();
+    var mx=dx2v(e.clientX-r.left),my=dy2v(e.clientY-r.top);
+    var g=e.deltaY>0?1.13:1/1.13;
+    vX={min:mx+(vX.min-mx)*g,max:mx+(vX.max-mx)*g};
+    vY={min:my+(vY.min-my)*g,max:my+(vY.max-my)*g};
+    draw();
+  }
+},{passive:false});
+cv.addEventListener('mousedown',function(e){
+  if(!raw.length) return;
+  panning=false; panStart={x:e.clientX,y:e.clientY};
+  if(!fixedMode) panSnap={x0:vX.min,x1:vX.max,y0:vY.min,y1:vY.max};
+});
+cv.addEventListener('mousemove',function(e){
+  if(!panStart) return;
+  var dx=e.clientX-panStart.x,dy=e.clientY-panStart.y;
+  if(Math.abs(dx)>3||Math.abs(dy)>3) panning=true;
+  if(!panning||fixedMode) return;
+  cv.style.cursor='crosshair';
+  var xR=panSnap.x1-panSnap.x0,yR=panSnap.y1-panSnap.y0;
+  vX={min:panSnap.x0-dx/cv.width*xR,max:panSnap.x1-dx/cv.width*xR};
+  vY={min:panSnap.y0+dy/cv.height*yR,max:panSnap.y1+dy/cv.height*yR};
+  draw();
+});
+window.addEventListener('mouseup',function(){ panStart=null; setTimeout(function(){panning=false;},50); });
+cv.addEventListener('click',function(e){
+  if(panning||!raw.length) return;
+  var r=cv.getBoundingClientRect();
+  var mx=e.clientX-r.left,my=e.clientY-r.top;
+  var best=-1,bestD=Infinity;
+  for(var i=0;i<raw.length;i++){
+    var d=Math.hypot(vx2p(raw[i].e)-mx,vy2p(raw[i].s)-my);
+    if(d<bestD){bestD=d;best=i;}
+  }
+  if(best>=0&&bestD<22) pick(best);
+});
+
+// ── ticks ─────────────────────────────────────────────────
+function niceTicks(min,max,maxCount){
+  maxCount=maxCount||12;
+  var steps=[0.00001,0.00002,0.00005,0.0001,0.0002,0.0005,0.001,0.002,0.005,
+             0.01,0.02,0.05,0.1,0.2,0.5,1,2,5,10,20,25,50,100,200,500,1000,2000,5000,10000];
+  var step=1;
+  for(var k=0;k<steps.length;k++){
+    step=steps[k];
+    if(Math.ceil((max-min)/step)+1<=maxCount) break;
+  }
+  var dec=Math.max(0,-Math.floor(Math.log10(step))+1);
+  var start=Math.floor(min/step)*step;
+  var ticks=[];
+  for(var v=start;v<=max+step*0.001;v+=step) ticks.push(parseFloat(v.toFixed(dec)));
+  return {step:step,ticks:ticks};
+}
+function fmt(v){
+  if(v===0) return '0';
+  if(Math.abs(v)<0.0001) return v.toExponential(3);
+  if(Math.abs(v)>=1e7)   return v.toExponential(3);
+  return parseFloat(v.toPrecision(7)).toString();
+}
+
+// ── DRAW ─────────────────────────────────────────────────
+function draw(){
+  var W=cv.width,H=cv.height;
+  cx.clearRect(0,0,W,H);
+
+  // background with subtle scanline via canvas
+  cx.fillStyle='#f0f0f0'; cx.fillRect(0,0,W,H);
+
+  var px0=M.l,px1=W-M.r,py0=M.t,py1=H-M.b;
+
+  // plot area
+  cx.fillStyle='#ffffff'; cx.fillRect(px0,py0,px1-px0,py1-py0);
+
+  // subtle green phosphor glow on plot area
+  var grd=cx.createRadialGradient((px0+px1)/2,(py0+py1)/2,10,(px0+px1)/2,(py0+py1)/2,Math.max(px1-px0,py1-py0)/1.5);
+  grd.addColorStop(0,'rgba(72,168,48,0.04)');
+  grd.addColorStop(1,'rgba(0,0,0,0)');
+  cx.fillStyle=grd; cx.fillRect(px0,py0,px1-px0,py1-py0);
+
+  // visible range
+  var xMin,xMax,yMin,yMax;
+  if(fixedMode){xMin=0;xMax=(px1-px0)/pxPerUnit;yMin=0;yMax=(py1-py0)/pxPerUnit;}
+  else{xMin=vX.min;xMax=vX.max;yMin=vY.min;yMax=vY.max;}
+
+  // Fixed mode: one tick every ~70px so labels never crowd.
+  // Zooming in (bigger pxPerUnit -> bigger canvas -> more pixels) allows more ticks.
+  var fixedTickTarget = fixedMode ? Math.max(4, Math.min(25, Math.round((px1-px0)/70))) : 14;
+  var xT=niceTicks(xMin,xMax,fixedTickTarget);
+  var yT=niceTicks(yMin,yMax,fixedTickTarget);
+
+  if(fixedMode){
+    var cs=Math.max(xT.step,yT.step);
+    var dec=Math.max(0,-Math.floor(Math.log10(cs))+1);
+    var mk=function(min,max,s,d){var t=[],v=Math.floor(min/s)*s;for(;v<=max+s*0.001;v+=s)t.push(parseFloat(v.toFixed(d)));return t;};
+    xT={step:cs,ticks:mk(xMin,xMax,cs,dec)};
+    yT={step:cs,ticks:mk(yMin,yMax,cs,dec)};
+  }
+
+  cx.setLineDash([]);
+
+  // X grid + labels
+  cx.font='bold 13px Arial,sans-serif';
+  for(var i=0;i<xT.ticks.length;i++){
+    var v=xT.ticks[i];
+    var px=vx2p(v);
+    if(px<px0-1||px>px1+1) continue;
+    // grid line — dim green phosphor
+    cx.strokeStyle='rgba(180,180,180,0.7)'; cx.lineWidth=1;
+    cx.beginPath(); cx.moveTo(px,py0); cx.lineTo(px,py1); cx.stroke();
+    // tick
+    cx.strokeStyle='#888'; cx.lineWidth=2;
+    cx.beginPath(); cx.moveTo(px,py1); cx.lineTo(px,py1+8); cx.stroke();
+    // label
+    cx.fillStyle='#000'; cx.textAlign='center';
+    cx.fillText(fmt(v),px,py1+24);
+  }
+
+  // Y grid + labels
+  cx.font='bold 13px Arial,sans-serif';
+  for(var i=0;i<yT.ticks.length;i++){
+    var v=yT.ticks[i];
+    var py=vy2p(v);
+    if(py<py0-1||py>py1+1) continue;
+    cx.strokeStyle='rgba(180,180,180,0.7)'; cx.lineWidth=1;
+    cx.beginPath(); cx.moveTo(px0,py); cx.lineTo(px1,py); cx.stroke();
+    cx.strokeStyle='#888'; cx.lineWidth=2;
+    cx.beginPath(); cx.moveTo(px0,py); cx.lineTo(px0-8,py); cx.stroke();
+    cx.fillStyle='#000'; cx.textAlign='right';
+    cx.fillText(fmt(v),px0-12,py+5);
+  }
+
+  // origin crosshair in fixed mode
+  if(fixedMode){
+    var ox=vx2p(0),oy=vy2p(0);
+    if(ox>=px0&&ox<=px1&&oy>=py0&&oy<=py1){
+      cx.strokeStyle='rgba(0,0,200,0.4)'; cx.lineWidth=1; cx.setLineDash([4,4]);
+      cx.beginPath(); cx.moveTo(ox,py0); cx.lineTo(ox,py1); cx.stroke();
+      cx.beginPath(); cx.moveTo(px0,oy); cx.lineTo(px1,oy); cx.stroke();
+      cx.setLineDash([]);
+    }
+  }
+
+  // beveled border around plot area
+  cx.setLineDash([]);
+  // outer dark
+  cx.strokeStyle='#000'; cx.lineWidth=2;
+  cx.strokeRect(px0-1,py0-1,px1-px0+2,py1-py0+2);
+  // inner highlight top-left
+  cx.strokeStyle='#ccc'; cx.lineWidth=1;
+  cx.beginPath(); cx.moveTo(px0,py1); cx.lineTo(px0,py0); cx.lineTo(px1,py0); cx.stroke();
+  // inner shadow bottom-right
+  cx.strokeStyle='#999'; cx.lineWidth=1;
+  cx.beginPath(); cx.moveTo(px0,py1); cx.lineTo(px1,py1); cx.lineTo(px1,py0); cx.stroke();
+
+  // axis labels
+  cx.fillStyle='#333'; cx.font='bold 12px Arial,sans-serif'; cx.textAlign='center';
+  cx.fillText('ε (%)',px0+(px1-px0)/2,H-5);
+  cx.save(); cx.translate(14,py0+(py1-py0)/2); cx.rotate(-Math.PI/2);
+  cx.fillText('σ (MPa)',0,0); cx.restore();
+
+  // fixed mode overlay
+  if(fixedMode){
+    cx.fillStyle='rgba(0,0,128,0.04)'; cx.fillRect(px0,py0,px1-px0,py1-py0);
+    cx.fillStyle='#000080'; cx.font='bold 11px Arial,sans-serif'; cx.textAlign='right';
+    cx.fillText('⊕ LOCK 1%=1MPa ['+pxPerUnit.toFixed(0)+'px/u]',px1-6,py0+16);
+  }
+
+  if(!raw.length) return;
+
+  // clip to plot
+  cx.save();
+  cx.beginPath(); cx.rect(px0,py0,px1-px0,py1-py0); cx.clip();
+
+  // tangent line — amber dashed
+  if(sel[0]&&sel[1]){
+    var ab=[sel[0],sel[1]].slice().sort(function(a,b){return a.e-b.e;});
+    var pa=ab[0],pb=ab[1],slp=(pb.s-pa.s)/(pb.e-pa.e);
+    var span=(fixedMode?xMax:vX.max)-(fixedMode?xMin:vX.min);
+    var x0=pa.e-span*0.15,x1=pb.e+span*0.15;
+    cx.strokeStyle='#cc0000'; cx.lineWidth=1.5; cx.setLineDash([6,3]);
+    cx.beginPath();
+    cx.moveTo(vx2p(x0),vy2p(pa.s+slp*(x0-pa.e)));
+    cx.lineTo(vx2p(x1),vy2p(pa.s+slp*(x1-pa.e)));
+    cx.stroke(); cx.setLineDash([]);
+  }
+
+  // spline — phosphor green glow
+  if(spPts.length>1){
+    var lw=getThick();
+    // glow layer
+    cx.strokeStyle='rgba(0,80,200,0.12)'; cx.lineWidth=lw+3;
+    cx.lineJoin='round'; cx.lineCap='round'; cx.setLineDash([]);
+    cx.beginPath();
+    var lpx=null,lpy=null,started=false;
+    for(var i=0;i<spPts.length;i++){
+      var ppx=vx2p(spPts[i].x)|0,ppy=vy2p(spPts[i].y)|0;
+      if(ppx===lpx&&ppy===lpy) continue; lpx=ppx;lpy=ppy;
+      if(!started){cx.moveTo(ppx,ppy);started=true;}else cx.lineTo(ppx,ppy);
+    }
+    cx.stroke();
+    // main line
+    cx.strokeStyle='#0050c8'; cx.lineWidth=lw;
+    cx.beginPath(); started=false; lpx=null; lpy=null;
+    for(var i=0;i<spPts.length;i++){
+      var ppx=vx2p(spPts[i].x)|0,ppy=vy2p(spPts[i].y)|0;
+      if(ppx===lpx&&ppy===lpy) continue; lpx=ppx;lpy=ppy;
+      if(!started){cx.moveTo(ppx,ppy);started=true;}else cx.lineTo(ppx,ppy);
+    }
+    cx.stroke();
+  }
+
+  // dots
+  if(showDots){
+    for(var i=0;i<raw.length;i++){
+      var is1=sel[0]&&sel[0].i===i,is2=sel[1]&&sel[1].i===i;
+      if(!is1&&!is2){
+        cx.beginPath(); cx.arc(vx2p(raw[i].e),vy2p(raw[i].s),2,0,Math.PI*2);
+        cx.fillStyle='rgba(0,80,200,0.4)'; cx.fill();
+      }
+    }
+  }
+
+  // selected points — pixelated diamond markers
+  function drawMarker(px,py,color,label){
+    var s=8;
+    cx.fillStyle=color;
+    cx.beginPath();
+    cx.moveTo(px,py-s); cx.lineTo(px+s,py); cx.lineTo(px,py+s); cx.lineTo(px-s,py);
+    cx.closePath(); cx.fill();
+    cx.strokeStyle='#fff'; cx.lineWidth=1; cx.stroke();
+    cx.fillStyle='#fff'; cx.font='bold 10px "Share Tech Mono",monospace'; cx.textAlign='center';
+    cx.fillText(label,px,py+4);
+  }
+  if(sel[0]) drawMarker(vx2p(sel[0].e),vy2p(sel[0].s),'#0050c8','α');
+  if(sel[1]) drawMarker(vx2p(sel[1].e),vy2p(sel[1].s),'#cc0000','β');
+
+  cx.restore();
+}
+
+// ── Catmull-Rom ───────────────────────────────────────────
+function catmullRom(pts){
+  var MAX=400,src=pts;
+  if(pts.length>MAX){
+    var o=[],s=pts.length/MAX;
+    for(var k=0;k<MAX;k++) o.push(pts[Math.round(k*s)]);
+    o.push(pts[pts.length-1]); src=o;
+  }
+  if(src.length<2) return src;
+  var n=6,g0={x:2*src[0].x-src[1].x,y:2*src[0].y-src[1].y};
+  var gN={x:2*src[src.length-1].x-src[src.length-2].x,y:2*src[src.length-1].y-src[src.length-2].y};
+  var a=[g0].concat(src,[gN]),out=[];
+  for(var i=1;i<a.length-2;i++){
+    var p0=a[i-1],p1=a[i],p2=a[i+1],p3=a[i+2];
+    for(var j=(i===1?0:1);j<=n;j++){
+      var t=j/n,t2=t*t,t3=t2*t;
+      out.push({
+        x:.5*((2*p1.x)+(-p0.x+p2.x)*t+(2*p0.x-5*p1.x+4*p2.x-p3.x)*t2+(-p0.x+3*p1.x-3*p2.x+p3.x)*t3),
+        y:.5*((2*p1.y)+(-p0.y+p2.y)*t+(2*p0.y-5*p1.y+4*p2.y-p3.y)*t2+(-p0.y+3*p1.y-3*p2.y+p3.y)*t3)
+      });
+    }
+  }
+  return out;
+}
+
+function nums(t){ return t.trim().split(/[\s,;]+/).map(Number).filter(isFinite); }
+
+// ── plot ──────────────────────────────────────────────────
+function doPlot(){
+  var en=nums(document.getElementById('eIn').value);
+  var sn=nums(document.getElementById('sIn').value);
+  var msg=document.getElementById('msg');
+  if(!en.length||!sn.length){msg.textContent='! MISSING DATA';msg.style.color='#e04030';return;}
+  if(en.length!==sn.length){msg.textContent='! MISMATCH '+en.length+'/'+sn.length;msg.style.color='#e04030';return;}
+  if(en.length<2){msg.textContent='! NEED ≥2 PTS';msg.style.color='#e04030';return;}
+  msg.textContent='◈ '+en.length+' PTS LOADED'; msg.style.color='#a8d458';
+
+  raw=en.map(function(e,i){return{e:e,s:sn[i]};}).sort(function(a,b){return a.e-b.e;});
+  sel=[null,null]; mode=0;
+  spPts=catmullRom(raw.map(function(p){return{x:p.e,y:p.s};}));
+
+  var xs=raw.map(function(p){return p.e;});
+  var ys=raw.map(function(p){return p.s;});
+  var xt=niceTicks(0,Math.max.apply(null,xs)*1.08,14);
+  var yt=niceTicks(0,Math.max.apply(null,ys)*1.08,12);
+  fX={min:0,max:xt.ticks[xt.ticks.length-1]};
+  fY={min:0,max:yt.ticks[yt.ticks.length-1]};
+  vX={min:fX.min,max:fX.max}; vY={min:fY.min,max:fY.max};
+  pxPerUnit=50; sizeCanvas(); buildTable(); draw();
+  document.getElementById('btnRZ').style.display='';
+  document.getElementById('hint').style.display='';
+  setStatus('◈ TARGETING MODE — SELECT POINT ALPHA ON CHART','');
+  updateCards();
+}
+
+function doDemo(){
+  document.getElementById('eIn').value='0.02\n0.20\n0.50\n1.00\n1.50\n2.00\n2.50\n3.00\n3.50\n4.00\n5.00\n6.00\n7.00\n8.00\n9.00\n10.00\n11.00\n12.00\n13.00';
+  document.getElementById('sIn').value='0.04\n0.40\n0.98\n1.95\n2.90\n4.20\n5.80\n7.00\n7.90\n8.30\n8.55\n8.60\n8.55\n8.50\n8.42\n8.35\n8.25\n8.15\n8.05';
+  doPlot();
+}
+
+function doClear(){
+  document.getElementById('eIn').value=''; document.getElementById('sIn').value='';
+  raw=[]; sel=[null,null]; mode=0; spPts=[];
+  document.getElementById('msg').textContent='';
+  document.getElementById('tb').innerHTML='';
+  ['v1','v2','vE'].forEach(function(id){document.getElementById(id).textContent='---';});
+  document.getElementById('s1').textContent='SELECT ON CHART';
+  document.getElementById('s2').textContent='SELECT ON CHART';
+  document.getElementById('sE').textContent='MPa';
+  document.getElementById('btnRZ').style.display='none';
+  document.getElementById('hint').style.display='none';
+  setStatus('▶ AWAITING INPUT — ENTER DATA AND EXECUTE PLOT','');
+  sizeCanvas(); draw();
+}
+
+// ── save / load ───────────────────────────────────────────
+function openSaveDialog(){
+  var eVals = document.getElementById('eIn').value.trim();
+  var sVals = document.getElementById('sIn').value.trim();
+  if(!eVals || !sVals){
+    document.getElementById('msg').textContent = '! NO DATA';
+    document.getElementById('msg').style.color = '#e04030';
+    return;
+  }
+  var defaultName = 'modulus_' + new Date().toISOString().slice(0,10) + '.json';
+  document.getElementById('saveFilename').value = defaultName;
+  document.getElementById('saveModal').style.display = 'flex';
+  setTimeout(function(){
+    var el = document.getElementById('saveFilename');
+    el.focus(); el.select();
+  }, 50);
+}
+
+function closeSaveDialog(){
+  document.getElementById('saveModal').style.display = 'none';
+}
+
+function confirmSave(){
+  var name = document.getElementById('saveFilename').value.trim() || 'modulus_data';
+  if(!name.toLowerCase().endsWith('.json')) name += '.json';
+
+  var payload = JSON.stringify({
+    version: 'modulus_v4_8',
+    author:  'Sinisa Svoger',
+    saved:   new Date().toISOString(),
+    strain:  document.getElementById('eIn').value.trim(),
+    stress:  document.getElementById('sIn').value.trim(),
+    sel0: sel[0] ? {e:sel[0].e, s:sel[0].s, i:sel[0].i} : null,
+    sel1: sel[1] ? {e:sel[1].e, s:sel[1].s, i:sel[1].i} : null
+  }, null, 2);
+
+  // Create blob and trigger download — works on file://, http://, https://
+  var blob = new Blob([payload], {type: 'application/json'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href     = url;
+  a.download = name;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){
+    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  }, 200);
+
+  closeSaveDialog();
+  var msg = document.getElementById('msg');
+  msg.textContent = '▼ DOWNLOADING: ' + name;
+  msg.style.color = '#70a0d8';
+  setTimeout(function(){ msg.textContent = ''; }, 3000);
+}
+
+// Close on backdrop click
+document.getElementById('saveModal').addEventListener('click', function(e){
+  if(e.target === this) closeSaveDialog();
+});
+// Keyboard in filename field
+document.getElementById('saveFilename').addEventListener('keydown', function(e){
+  if(e.key === 'Enter')  confirmSave();
+  if(e.key === 'Escape') closeSaveDialog();
+});
+
+
+function doLoad(event){
+  var file=event.target.files[0]; if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var d=JSON.parse(e.target.result);
+      if(!d.strain||!d.stress) throw new Error('bad');
+      document.getElementById('eIn').value=d.strain;
+      document.getElementById('sIn').value=d.stress;
+      doPlot();
+      if(d.sel0&&d.sel0.i!=null&&d.sel0.i<raw.length) sel[0]={e:raw[d.sel0.i].e,s:raw[d.sel0.i].s,i:d.sel0.i};
+      if(d.sel1&&d.sel1.i!=null&&d.sel1.i<raw.length) sel[1]={e:raw[d.sel1.i].e,s:raw[d.sel1.i].s,i:d.sel1.i};
+      updateCards(); draw();
+      document.getElementById('msg').textContent='▲ LOADED: '+file.name.toUpperCase();
+      document.getElementById('msg').style.color='#70a0d8';
+      setTimeout(function(){document.getElementById('msg').textContent='';},3000);
+    }catch(err){document.getElementById('msg').textContent='! READ ERROR';document.getElementById('msg').style.color='#e04030';}
+    event.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+// ── table / pick ──────────────────────────────────────────
+function buildTable(){
+  var tb=document.getElementById('tb'); tb.innerHTML='';
+  raw.forEach(function(p,i){
+    var tr=document.createElement('tr'); tr.id='r'+i;
+    tr.innerHTML='<td>'+(i+1)+'</td><td>'+fmt(p.e)+'</td><td>'+fmt(p.s)+'</td>';
+    (function(idx){tr.onclick=function(){pick(idx);};})(i);
+    tb.appendChild(tr);
+  });
+}
+function pick(i){
+  sel[mode]={e:raw[i].e,s:raw[i].s,i:i};
+  mode=mode===0?1:0;
+  updateCards(); draw();
+}
+function resetPts(){
+  sel=[null,null]; mode=0;
+  setStatus(raw.length?'◈ TARGETING MODE — SELECT POINT ALPHA ON CHART':'▶ AWAITING INPUT — ENTER DATA AND EXECUTE PLOT','');
+  updateCards(); draw();
+}
+function resetZoom(){
+  pxPerUnit=50; vX={min:fX.min,max:fX.max}; vY={min:fY.min,max:fY.max};
+  sizeCanvas(); draw();
+}
+function setStatus(txt,cls){
+  var el=document.getElementById('status'); el.textContent=txt; el.style.color=cls==='ok'?'#008000':'#000';
+}
+function updateCards(){
+  document.getElementById('v1').textContent=sel[0]?'ε='+fmt(sel[0].e)+'% σ='+fmt(sel[0].s):'---';
+  document.getElementById('s1').textContent=sel[0]?'PT '+(sel[0].i+1):'SELECT ON CHART';
+  document.getElementById('v2').textContent=sel[1]?'ε='+fmt(sel[1].e)+'% σ='+fmt(sel[1].s):'---';
+  document.getElementById('s2').textContent=sel[1]?'PT '+(sel[1].i+1):'SELECT ON CHART';
+  if(sel[0]&&sel[1]){
+    var de=sel[1].e-sel[0].e,ds=sel[1].s-sel[0].s;
+    if(Math.abs(de)<1e-14){document.getElementById('vE').textContent='Δε≈0';document.getElementById('sE').textContent='';}
+    else{document.getElementById('vE').textContent=fmt((ds/de)*100)+' MPa';document.getElementById('sE').textContent='E = (Δσ/Δε) × 100';}
+    setStatus('◈ MODULUS ACQUIRED — MISSION COMPLETE','ok');
+  } else {
+    document.getElementById('vE').textContent='---'; document.getElementById('sE').textContent='MPa';
+    if(sel[0]) setStatus('▶ ALPHA LOCKED — SELECT POINT BETA TO COMPUTE','');
+  }
+  raw.forEach(function(_,i){
+    var tr=document.getElementById('r'+i); if(!tr) return;
+    tr.className=(sel[0]&&sel[0].i===i)?'s1':(sel[1]&&sel[1].i===i)?'s2':'';
+  });
+}
+
+sizeCanvas(); draw();
+
+// close modal on backdrop
+document.getElementById('saveModal').addEventListener('click',function(e){
+  if(e.target===this) closeSaveDialog();
+});
+document.getElementById('saveFilename').addEventListener('keydown',function(e){
+  if(e.key==='Enter') confirmSave();
+  if(e.key==='Escape') closeSaveDialog();
+});
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>MODULUS ANALYZER v4.8 — X-COM TACTICAL</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+:root{
+  --xc-bg:       #0a0f08;
+  --xc-panel:    #111a0d;
+  --xc-border:   #2a3d1a;
+  --xc-hi:       #4a6e28;
+  --xc-green:    #72a830;
+  --xc-ltgreen:  #a8d458;
+  --xc-dimgreen: #3a5018;
+  --xc-amber:    #c8a020;
+  --xc-red:      #b83020;
+  --xc-ltred:    #e04030;
+  --xc-blue:     #2858a0;
+  --xc-ltblue:   #5898e0;
+  --xc-text:     #c8d8a8;
+  --xc-dimtext:  #5a7040;
+  --xc-scan:     rgba(0,0,0,0.18);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;image-rendering:pixelated}
+html,body{background:var(--xc-bg);color:var(--xc-text);font-family:'Share Tech Mono',monospace;font-size:13px;min-width:960px}
+
+/* ── scanline overlay ── */
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
+  background:repeating-linear-gradient(0deg,var(--xc-scan) 0px,var(--xc-scan) 1px,transparent 1px,transparent 3px);
+}
+
+/* ── panels ── */
+.xc-panel{
+  background:var(--xc-panel);
+  border:2px solid var(--xc-border);
+  box-shadow:inset 1px 1px 0 #3a5020,inset -1px -1px 0 #060a04,2px 2px 0 #000;
+  padding:8px 10px;
+  margin-bottom:8px;
+}
+.xc-title-bar{
+  background:var(--xc-hi);
+  color:var(--xc-ltgreen);
+  font-size:11px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  padding:3px 8px;
+  margin:-8px -10px 8px -10px;
+  border-bottom:2px solid var(--xc-border);
+  display:flex;justify-content:space-between;align-items:center;
+}
+
+/* ── topbar ── */
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;padding:6px 10px;
+  background:var(--xc-dimgreen);border:2px solid var(--xc-green);
+  box-shadow:inset 1px 1px 0 #4a6e28,inset -1px -1px 0 #060a04,2px 2px 0 #000;}
+.app-title{font-size:18px;letter-spacing:4px;color:var(--xc-ltgreen);text-shadow:0 0 8px #72a830,0 0 2px #000;text-transform:uppercase}
+.branding{text-align:right;font-size:10px;color:var(--xc-dimtext);line-height:1.7;letter-spacing:1px}
+.branding b{color:var(--xc-green)}
+
+/* ── buttons — beveled X-COM style ── */
+.xc-btn{
+  display:inline-block;
+  font-family:'Share Tech Mono',monospace;
+  font-size:12px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  cursor:pointer;
+  padding:4px 10px;
+  color:var(--xc-text);
+  background:var(--xc-dimgreen);
+  border:none;
+  outline:none;
+  box-shadow:
+    inset 1px 1px 0 #4a6e28,
+    inset -1px -1px 0 #060a04,
+    2px 2px 0 #000;
+  user-select:none;
+  transition:none;
+  white-space:nowrap;
+}
+.xc-btn:hover{background:#1e3010;color:var(--xc-ltgreen)}
+.xc-btn:active,
+.xc-btn.pressed{
+  background:#0d1a08;
+  box-shadow:inset 1px 1px 0 #060a04,inset -1px -1px 0 #4a6e28,2px 2px 0 #000;
+  transform:translate(1px,1px);
+}
+.xc-btn.primary{background:#1a3a10;color:var(--xc-ltgreen);box-shadow:inset 1px 1px 0 #4a8828,inset -1px -1px 0 #060a04,2px 2px 0 #000}
+.xc-btn.primary:hover{background:#224815}
+.xc-btn.danger {background:#3a0c08;color:#e06050;box-shadow:inset 1px 1px 0 #6a1c14,inset -1px -1px 0 #1a0404,2px 2px 0 #000}
+.xc-btn.danger:hover{background:#4a1008}
+.xc-btn.save  {background:#1a2a40;color:#70a0d8;box-shadow:inset 1px 1px 0 #2858a0,inset -1px -1px 0 #060a14,2px 2px 0 #000}
+.xc-btn.save:hover{background:#1e3450}
+.xc-btn.tog   {background:#0d1a08;color:var(--xc-dimtext);box-shadow:inset 1px 1px 0 #060a04,inset -1px -1px 0 #2a3d1a,2px 2px 0 #000}
+.xc-btn.tog.on{background:#1e4010;color:var(--xc-ltgreen);box-shadow:inset 1px 1px 0 #4a8828,inset -1px -1px 0 #060a04,2px 2px 0 #000}
+.xc-btn.tog.fixed-on{background:#2a1a40;color:#c090f8;box-shadow:inset 1px 1px 0 #6838c0,inset -1px -1px 0 #0a0414,2px 2px 0 #000}
+
+/* ── input fields ── */
+textarea,input[type=number]{
+  font-family:'Share Tech Mono',monospace;font-size:12px;
+  background:#060e04;color:var(--xc-ltgreen);
+  border:2px solid var(--xc-border);
+  box-shadow:inset 1px 1px 0 #000,inset -1px -1px 0 #2a3d1a;
+  padding:5px;
+  outline:none;
+  resize:vertical;
+}
+textarea::placeholder{color:var(--xc-dimtext)}
+input[type=range]{
+  -webkit-appearance:none;height:10px;background:var(--xc-dimgreen);
+  border:1px solid var(--xc-border);
+  box-shadow:inset 1px 1px 0 #000;
+  outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:14px;height:14px;
+  background:var(--xc-green);
+  border:2px solid var(--xc-ltgreen);
+  box-shadow:1px 1px 0 #000;
+  cursor:pointer;
+}
+input[type=file]{display:none}
+
+/* ── layout ── */
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.controls{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.thick-ctrl{display:flex;align-items:center;gap:6px;padding:4px 8px;
+  background:#060e04;border:2px solid var(--xc-border);
+  box-shadow:inset 1px 1px 0 #000,inset -1px -1px 0 #2a3d1a}
+
+/* ── data cards ── */
+.cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px}
+.card{
+  background:var(--xc-panel);
+  border:2px solid var(--xc-border);
+  box-shadow:inset 1px 1px 0 #3a5020,inset -1px -1px 0 #060a04,2px 2px 0 #000;
+  padding:0;
+}
+.card .ctitle{
+  background:var(--xc-dimgreen);color:var(--xc-dimtext);
+  font-size:9px;letter-spacing:2px;text-transform:uppercase;
+  padding:2px 6px;border-bottom:1px solid var(--xc-border);
+}
+.card .cval{font-size:14px;color:var(--xc-ltgreen);padding:4px 6px;letter-spacing:1px;word-break:break-all}
+.card .csub{font-size:9px;color:var(--xc-dimtext);padding:0 6px 4px;letter-spacing:1px}
+.card.result .ctitle{background:#1a3010;color:var(--xc-green)}
+.card.result .cval{color:var(--xc-amber);font-size:16px}
+.card.result .csub{color:#7a6020}
+
+/* ── status bar ── */
+.statusbar{
+  display:flex;gap:8px;align-items:center;margin-bottom:6px;
+  background:#060e04;border:2px solid var(--xc-border);
+  box-shadow:inset 1px 1px 0 #000;
+  padding:4px 8px;
+}
+#status{
+  font-size:11px;letter-spacing:1px;color:var(--xc-amber);flex:1;
+  text-transform:uppercase;
+}
+#status.ok{color:var(--xc-ltgreen)}
+#status.warn{color:var(--xc-ltred)}
+
+/* ── chart container ── */
+#chartWrap{
+  width:100%;overflow:auto;margin-bottom:4px;
+  border:2px solid var(--xc-border);
+  box-shadow:inset 1px 1px 0 #000,inset -1px -1px 0 #2a3d1a,2px 2px 0 #000;
+}
+canvas{display:block;cursor:crosshair}
+
+/* ── hint ── */
+.hint{font-size:10px;color:var(--xc-dimtext);text-align:center;letter-spacing:2px;
+  text-transform:uppercase;margin-top:4px}
+
+/* ── data table ── */
+.tbl{
+  border:2px solid var(--xc-border);
+  box-shadow:inset 1px 1px 0 #000;
+  max-height:140px;overflow-y:auto;margin-top:8px;
+}
+table{width:100%;font-size:11px;border-collapse:collapse;letter-spacing:1px}
+th{
+  padding:3px 8px;color:var(--xc-green);text-transform:uppercase;letter-spacing:2px;
+  border-bottom:1px solid var(--xc-border);text-align:left;
+  background:var(--xc-dimgreen);position:sticky;top:0;
+}
+td{padding:2px 8px;color:var(--xc-text);border-bottom:1px solid #0f1a0a;cursor:pointer}
+tr:hover td{background:#1a2a10;color:var(--xc-ltgreen)}
+tr.s1 td{background:#0d2208;color:var(--xc-ltgreen)}
+tr.s2 td{background:#2a0a08;color:#e06050}
+
+/* ── label ── */
+.field-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--xc-dimtext);margin-bottom:3px}
+#msg{font-size:11px;letter-spacing:1px;color:var(--xc-amber)}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div>
+    <div class="app-title">◈ MODULUS ANALYZER</div>
+    <div style="font-size:9px;color:var(--xc-dimtext);letter-spacing:3px;margin-top:2px">STRAIN / STRESS TACTICAL UNIT v4.8</div>
+  </div>
+  <div class="branding">
+    <b>SINISA SVOGER 2026 v4_8</b><br>
+    FACULTY OF MECHANICAL ENGINEERING<br>
+    UNIVERSITY OF MARIBOR
+  </div>
+</div>
+
+<!-- DATA ENTRY -->
+<div class="xc-panel">
+  <div class="xc-title-bar">
+    <span>▶ DATA INPUT MODULE</span>
+    <span id="msg"></span>
+  </div>
+  <div class="row">
+    <div>
+      <div class="field-lbl">◈ Strain ε (%)</div>
+      <textarea id="eIn" rows="5" style="width:100%" placeholder="0.001&#10;0.005&#10;..."></textarea>
+    </div>
+    <div>
+      <div class="field-lbl">◈ Stress σ (MPa)</div>
+      <textarea id="sIn" rows="5" style="width:100%" placeholder="50&#10;250&#10;..."></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <button class="xc-btn primary" onclick="doPlot()">▶ PLOT</button>
+  <button class="xc-btn" onclick="doDemo()">◈ DEMO</button>
+  <button class="xc-btn danger" onclick="doClear()">✕ CLEAR</button>
+  <button class="xc-btn save" onclick="openSaveDialog()">▼ SAVE</button>
+  <button class="xc-btn save" onclick="document.getElementById('fileIn').click()">▲ OPEN</button>
+  <input type="file" id="fileIn" accept=".json" onchange="doLoad(event)">
+  <div class="thick-ctrl">
+    <span style="font-size:9px;letter-spacing:2px;color:var(--xc-dimtext);text-transform:uppercase">LINE</span>
+    <input id="sl" type="range" min="0.1" max="10" step="0.1" value="1" style="width:70px" oninput="onSlider()">
+    <input id="slNum" type="number" min="0.1" max="10" step="0.1" value="1" style="width:46px" oninput="onNum()">
+    <span style="font-size:9px;color:var(--xc-dimtext)">PX</span>
+  </div>
+  <button id="btnDots" class="xc-btn tog" onclick="toggleDots()">◉ DOTS</button>
+  <button id="btnFixed" class="xc-btn tog" onclick="toggleFixed()">⊕ LOCK 1:1</button>
+</div>
+
+<!-- RESULT CARDS -->
+<div class="cards">
+  <div class="card">
+    <div class="ctitle">▶ POINT ALPHA</div>
+    <div class="cval" id="v1">---</div>
+    <div class="csub" id="s1">SELECT ON CHART</div>
+  </div>
+  <div class="card">
+    <div class="ctitle">▶ POINT BETA</div>
+    <div class="cval" id="v2">---</div>
+    <div class="csub" id="s2">SELECT ON CHART</div>
+  </div>
+  <div class="card result">
+    <div class="ctitle">◈ MODULUS E = (Δσ/Δε)×100</div>
+    <div class="cval" id="vE">---</div>
+    <div class="csub" id="sE">MPa</div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="statusbar">
+  <span id="status">▶ AWAITING INPUT — ENTER DATA AND EXECUTE PLOT</span>
+  <button id="btnRZ" class="xc-btn" onclick="resetZoom()" style="display:none">↺ RESET ZOOM</button>
+  <button class="xc-btn" onclick="resetPts()">✕ RESET PTS</button>
+</div>
+
+<!-- CHART -->
+<div id="chartWrap">
+  <canvas id="cv"></canvas>
+</div>
+<div class="hint" id="hint" style="display:none">[ SCROLL: ZOOM ] [ DRAG: PAN ] [ CLICK: SELECT POINT ]</div>
+
+<!-- DATA TABLE -->
+<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--xc-dimtext);margin-top:8px;margin-bottom:3px">▶ DATA REGISTRY</div>
+<div class="tbl">
+  <table><thead><tr><th>#</th><th>Strain ε (%)</th><th>Stress σ (MPa)</th></tr></thead>
+  <tbody id="tb"></tbody></table>
+</div>
+
+<script>
+var cv  = document.getElementById('cv');
+var cx  = cv.getContext('2d');
+var showDots  = false;
+var fixedMode = false;
+var M = {l:88, r:20, t:20, b:62};
+var pxPerUnit = 50;
+var vX={min:0,max:10}, vY={min:0,max:10};
+var fX={min:0,max:10}, fY={min:0,max:10};
+var raw=[], sel=[null,null], mode=0, spPts=[];
+var panning=false, panStart=null, panSnap=null;
+
+// ── sizing ────────────────────────────────────────────────
+function sizeCanvas(){
+  var wrap=document.getElementById('chartWrap');
+  if(fixedMode){
+    var W=Math.round(fX.max*pxPerUnit)+M.l+M.r;
+    var H=Math.round(fY.max*pxPerUnit)+M.t+M.b;
+    cv.width=Math.max(W,400); cv.height=Math.max(H,300);
+    wrap.style.height=Math.min(cv.height,700)+'px';
+    wrap.style.overflowX='auto'; wrap.style.overflowY='auto';
+  } else {
+    cv.width=wrap.offsetWidth||1200; cv.height=640;
+    wrap.style.height='640px';
+    wrap.style.overflowX='hidden'; wrap.style.overflowY='hidden';
+  }
+}
+window.addEventListener('resize',function(){ if(!fixedMode){sizeCanvas();draw();} });
+
+// ── coords ────────────────────────────────────────────────
+function vx2p(v){ return fixedMode?M.l+v*pxPerUnit:M.l+(v-vX.min)/(vX.max-vX.min)*(cv.width-M.l-M.r); }
+function vy2p(v){ return fixedMode?cv.height-M.b-v*pxPerUnit:cv.height-M.b-(v-vY.min)/(vY.max-vY.min)*(cv.height-M.t-M.b); }
+function dx2v(p){ return fixedMode?(p-M.l)/pxPerUnit:vX.min+(p-M.l)/(cv.width-M.l-M.r)*(vX.max-vX.min); }
+function dy2v(p){ return fixedMode?(cv.height-M.b-p)/pxPerUnit:vY.min+(cv.height-M.b-p)/(cv.height-M.t-M.b)*(vY.max-vY.min); }
+
+// ── controls ──────────────────────────────────────────────
+function getThick(){ return Math.max(0.1,parseFloat(document.getElementById('slNum').value)||1); }
+function onSlider(){ document.getElementById('slNum').value=parseFloat(document.getElementById('sl').value).toFixed(1); draw(); }
+function onNum(){ document.getElementById('sl').value=Math.min(10,Math.max(0.1,parseFloat(document.getElementById('slNum').value)||1)); draw(); }
+function toggleDots(){ showDots=!showDots; document.getElementById('btnDots').className=showDots?'xc-btn tog on':'xc-btn tog'; draw(); }
+function toggleFixed(){ fixedMode=!fixedMode; document.getElementById('btnFixed').className=fixedMode?'xc-btn tog fixed-on':'xc-btn tog'; pxPerUnit=50; sizeCanvas(); draw(); }
+
+// ── zoom / pan ────────────────────────────────────────────
+cv.addEventListener('wheel',function(e){
+  e.preventDefault();
+  if(!raw.length) return;
+  var f=e.deltaY>0?1/1.12:1.12;
+  if(fixedMode){ pxPerUnit=Math.max(5,Math.min(2000,pxPerUnit*f)); sizeCanvas(); draw(); }
+  else{
+    var r=cv.getBoundingClientRect();
+    var mx=dx2v(e.clientX-r.left),my=dy2v(e.clientY-r.top);
+    var g=e.deltaY>0?1.13:1/1.13;
+    vX={min:mx+(vX.min-mx)*g,max:mx+(vX.max-mx)*g};
+    vY={min:my+(vY.min-my)*g,max:my+(vY.max-my)*g};
+    draw();
+  }
+},{passive:false});
+cv.addEventListener('mousedown',function(e){
+  if(!raw.length) return;
+  panning=false; panStart={x:e.clientX,y:e.clientY};
+  if(!fixedMode) panSnap={x0:vX.min,x1:vX.max,y0:vY.min,y1:vY.max};
+});
+cv.addEventListener('mousemove',function(e){
+  if(!panStart) return;
+  var dx=e.clientX-panStart.x,dy=e.clientY-panStart.y;
+  if(Math.abs(dx)>3||Math.abs(dy)>3) panning=true;
+  if(!panning||fixedMode) return;
+  cv.style.cursor='crosshair';
+  var xR=panSnap.x1-panSnap.x0,yR=panSnap.y1-panSnap.y0;
+  vX={min:panSnap.x0-dx/cv.width*xR,max:panSnap.x1-dx/cv.width*xR};
+  vY={min:panSnap.y0+dy/cv.height*yR,max:panSnap.y1+dy/cv.height*yR};
+  draw();
+});
+window.addEventListener('mouseup',function(){ panStart=null; setTimeout(function(){panning=false;},50); });
+cv.addEventListener('click',function(e){
+  if(panning||!raw.length) return;
+  var r=cv.getBoundingClientRect();
+  var mx=e.clientX-r.left,my=e.clientY-r.top;
+  var best=-1,bestD=Infinity;
+  for(var i=0;i<raw.length;i++){
+    var d=Math.hypot(vx2p(raw[i].e)-mx,vy2p(raw[i].s)-my);
+    if(d<bestD){bestD=d;best=i;}
+  }
+  if(best>=0&&bestD<22) pick(best);
+});
+
+// ── ticks ─────────────────────────────────────────────────
+function niceTicks(min,max,maxCount){
+  maxCount=maxCount||12;
+  var steps=[0.00001,0.00002,0.00005,0.0001,0.0002,0.0005,0.001,0.002,0.005,
+             0.01,0.02,0.05,0.1,0.2,0.5,1,2,5,10,20,25,50,100,200,500,1000,2000,5000,10000];
+  var step=1;
+  for(var k=0;k<steps.length;k++){
+    step=steps[k];
+    if(Math.ceil((max-min)/step)+1<=maxCount) break;
+  }
+  var dec=Math.max(0,-Math.floor(Math.log10(step))+1);
+  var start=Math.floor(min/step)*step;
+  var ticks=[];
+  for(var v=start;v<=max+step*0.001;v+=step) ticks.push(parseFloat(v.toFixed(dec)));
+  return {step:step,ticks:ticks};
+}
+function fmt(v){
+  if(v===0) return '0';
+  if(Math.abs(v)<0.0001) return v.toExponential(3);
+  if(Math.abs(v)>=1e7)   return v.toExponential(3);
+  return parseFloat(v.toPrecision(7)).toString();
+}
+
+// ── DRAW ─────────────────────────────────────────────────
+function draw(){
+  var W=cv.width,H=cv.height;
+  cx.clearRect(0,0,W,H);
+
+  // background with subtle scanline via canvas
+  cx.fillStyle='#08100a'; cx.fillRect(0,0,W,H);
+
+  var px0=M.l,px1=W-M.r,py0=M.t,py1=H-M.b;
+
+  // plot area
+  cx.fillStyle='#060e04'; cx.fillRect(px0,py0,px1-px0,py1-py0);
+
+  // subtle green phosphor glow on plot area
+  var grd=cx.createRadialGradient((px0+px1)/2,(py0+py1)/2,10,(px0+px1)/2,(py0+py1)/2,Math.max(px1-px0,py1-py0)/1.5);
+  grd.addColorStop(0,'rgba(72,168,48,0.04)');
+  grd.addColorStop(1,'rgba(0,0,0,0)');
+  cx.fillStyle=grd; cx.fillRect(px0,py0,px1-px0,py1-py0);
+
+  // visible range
+  var xMin,xMax,yMin,yMax;
+  if(fixedMode){xMin=0;xMax=(px1-px0)/pxPerUnit;yMin=0;yMax=(py1-py0)/pxPerUnit;}
+  else{xMin=vX.min;xMax=vX.max;yMin=vY.min;yMax=vY.max;}
+
+  // Fixed mode: one tick every ~70px so labels never crowd.
+  // Zooming in (bigger pxPerUnit -> bigger canvas -> more pixels) allows more ticks.
+  var fixedTickTarget = fixedMode ? Math.max(4, Math.min(25, Math.round((px1-px0)/70))) : 14;
+  var xT=niceTicks(xMin,xMax,fixedTickTarget);
+  var yT=niceTicks(yMin,yMax,fixedTickTarget);
+
+  if(fixedMode){
+    var cs=Math.max(xT.step,yT.step);
+    var dec=Math.max(0,-Math.floor(Math.log10(cs))+1);
+    var mk=function(min,max,s,d){var t=[],v=Math.floor(min/s)*s;for(;v<=max+s*0.001;v+=s)t.push(parseFloat(v.toFixed(d)));return t;};
+    xT={step:cs,ticks:mk(xMin,xMax,cs,dec)};
+    yT={step:cs,ticks:mk(yMin,yMax,cs,dec)};
+  }
+
+  cx.setLineDash([]);
+
+  // X grid + labels
+  cx.font='bold 15px "Share Tech Mono",monospace';
+  for(var i=0;i<xT.ticks.length;i++){
+    var v=xT.ticks[i];
+    var px=vx2p(v);
+    if(px<px0-1||px>px1+1) continue;
+    // grid line — dim green phosphor
+    cx.strokeStyle='rgba(72,168,48,0.12)'; cx.lineWidth=1;
+    cx.beginPath(); cx.moveTo(px,py0); cx.lineTo(px,py1); cx.stroke();
+    // tick
+    cx.strokeStyle='#3a6020'; cx.lineWidth=2;
+    cx.beginPath(); cx.moveTo(px,py1); cx.lineTo(px,py1+8); cx.stroke();
+    // label
+    cx.fillStyle='#a8d458'; cx.textAlign='center';
+    cx.fillText(fmt(v),px,py1+24);
+  }
+
+  // Y grid + labels
+  cx.font='bold 15px "Share Tech Mono",monospace';
+  for(var i=0;i<yT.ticks.length;i++){
+    var v=yT.ticks[i];
+    var py=vy2p(v);
+    if(py<py0-1||py>py1+1) continue;
+    cx.strokeStyle='rgba(72,168,48,0.12)'; cx.lineWidth=1;
+    cx.beginPath(); cx.moveTo(px0,py); cx.lineTo(px1,py); cx.stroke();
+    cx.strokeStyle='#3a6020'; cx.lineWidth=2;
+    cx.beginPath(); cx.moveTo(px0,py); cx.lineTo(px0-8,py); cx.stroke();
+    cx.fillStyle='#a8d458'; cx.textAlign='right';
+    cx.fillText(fmt(v),px0-12,py+5);
+  }
+
+  // origin crosshair in fixed mode
+  if(fixedMode){
+    var ox=vx2p(0),oy=vy2p(0);
+    if(ox>=px0&&ox<=px1&&oy>=py0&&oy<=py1){
+      cx.strokeStyle='rgba(160,80,240,0.5)'; cx.lineWidth=1; cx.setLineDash([4,4]);
+      cx.beginPath(); cx.moveTo(ox,py0); cx.lineTo(ox,py1); cx.stroke();
+      cx.beginPath(); cx.moveTo(px0,oy); cx.lineTo(px1,oy); cx.stroke();
+      cx.setLineDash([]);
+    }
+  }
+
+  // beveled border around plot area
+  cx.setLineDash([]);
+  // outer dark
+  cx.strokeStyle='#000'; cx.lineWidth=2;
+  cx.strokeRect(px0-1,py0-1,px1-px0+2,py1-py0+2);
+  // inner highlight top-left
+  cx.strokeStyle='#2a5018'; cx.lineWidth=1;
+  cx.beginPath(); cx.moveTo(px0,py1); cx.lineTo(px0,py0); cx.lineTo(px1,py0); cx.stroke();
+  // inner shadow bottom-right
+  cx.strokeStyle='#0a1206'; cx.lineWidth=1;
+  cx.beginPath(); cx.moveTo(px0,py1); cx.lineTo(px1,py1); cx.lineTo(px1,py0); cx.stroke();
+
+  // axis labels
+  cx.fillStyle='#72a830'; cx.font='bold 13px "Share Tech Mono",monospace'; cx.textAlign='center';
+  cx.fillText('ε (%)',px0+(px1-px0)/2,H-5);
+  cx.save(); cx.translate(14,py0+(py1-py0)/2); cx.rotate(-Math.PI/2);
+  cx.fillText('σ (MPa)',0,0); cx.restore();
+
+  // fixed mode overlay
+  if(fixedMode){
+    cx.fillStyle='rgba(100,40,200,0.08)'; cx.fillRect(px0,py0,px1-px0,py1-py0);
+    cx.fillStyle='#8060d0'; cx.font='bold 11px "Share Tech Mono",monospace'; cx.textAlign='right';
+    cx.fillText('⊕ LOCK 1%=1MPa ['+pxPerUnit.toFixed(0)+'px/u]',px1-6,py0+16);
+  }
+
+  if(!raw.length) return;
+
+  // clip to plot
+  cx.save();
+  cx.beginPath(); cx.rect(px0,py0,px1-px0,py1-py0); cx.clip();
+
+  // tangent line — amber dashed
+  if(sel[0]&&sel[1]){
+    var ab=[sel[0],sel[1]].slice().sort(function(a,b){return a.e-b.e;});
+    var pa=ab[0],pb=ab[1],slp=(pb.s-pa.s)/(pb.e-pa.e);
+    var span=(fixedMode?xMax:vX.max)-(fixedMode?xMin:vX.min);
+    var x0=pa.e-span*0.15,x1=pb.e+span*0.15;
+    cx.strokeStyle='#c8a020'; cx.lineWidth=1.5; cx.setLineDash([6,3]);
+    cx.beginPath();
+    cx.moveTo(vx2p(x0),vy2p(pa.s+slp*(x0-pa.e)));
+    cx.lineTo(vx2p(x1),vy2p(pa.s+slp*(x1-pa.e)));
+    cx.stroke(); cx.setLineDash([]);
+  }
+
+  // spline — phosphor green glow
+  if(spPts.length>1){
+    var lw=getThick();
+    // glow layer
+    cx.strokeStyle='rgba(72,168,48,0.25)'; cx.lineWidth=lw+4;
+    cx.lineJoin='round'; cx.lineCap='round'; cx.setLineDash([]);
+    cx.beginPath();
+    var lpx=null,lpy=null,started=false;
+    for(var i=0;i<spPts.length;i++){
+      var ppx=vx2p(spPts[i].x)|0,ppy=vy2p(spPts[i].y)|0;
+      if(ppx===lpx&&ppy===lpy) continue; lpx=ppx;lpy=ppy;
+      if(!started){cx.moveTo(ppx,ppy);started=true;}else cx.lineTo(ppx,ppy);
+    }
+    cx.stroke();
+    // main line
+    cx.strokeStyle='#a8d458'; cx.lineWidth=lw;
+    cx.beginPath(); started=false; lpx=null; lpy=null;
+    for(var i=0;i<spPts.length;i++){
+      var ppx=vx2p(spPts[i].x)|0,ppy=vy2p(spPts[i].y)|0;
+      if(ppx===lpx&&ppy===lpy) continue; lpx=ppx;lpy=ppy;
+      if(!started){cx.moveTo(ppx,ppy);started=true;}else cx.lineTo(ppx,ppy);
+    }
+    cx.stroke();
+  }
+
+  // dots
+  if(showDots){
+    for(var i=0;i<raw.length;i++){
+      var is1=sel[0]&&sel[0].i===i,is2=sel[1]&&sel[1].i===i;
+      if(!is1&&!is2){
+        cx.beginPath(); cx.arc(vx2p(raw[i].e),vy2p(raw[i].s),2,0,Math.PI*2);
+        cx.fillStyle='rgba(168,212,88,0.5)'; cx.fill();
+      }
+    }
+  }
+
+  // selected points — pixelated diamond markers
+  function drawMarker(px,py,color,label){
+    var s=8;
+    cx.fillStyle=color;
+    cx.beginPath();
+    cx.moveTo(px,py-s); cx.lineTo(px+s,py); cx.lineTo(px,py+s); cx.lineTo(px-s,py);
+    cx.closePath(); cx.fill();
+    cx.strokeStyle='#fff'; cx.lineWidth=1; cx.stroke();
+    cx.fillStyle='#fff'; cx.font='bold 10px "Share Tech Mono",monospace'; cx.textAlign='center';
+    cx.fillText(label,px,py+4);
+  }
+  if(sel[0]) drawMarker(vx2p(sel[0].e),vy2p(sel[0].s),'#72a830','α');
+  if(sel[1]) drawMarker(vx2p(sel[1].e),vy2p(sel[1].s),'#b83020','β');
+
+  cx.restore();
+}
+
+// ── Catmull-Rom ───────────────────────────────────────────
+function catmullRom(pts){
+  var MAX=400,src=pts;
+  if(pts.length>MAX){
+    var o=[],s=pts.length/MAX;
+    for(var k=0;k<MAX;k++) o.push(pts[Math.round(k*s)]);
+    o.push(pts[pts.length-1]); src=o;
+  }
+  if(src.length<2) return src;
+  var n=6,g0={x:2*src[0].x-src[1].x,y:2*src[0].y-src[1].y};
+  var gN={x:2*src[src.length-1].x-src[src.length-2].x,y:2*src[src.length-1].y-src[src.length-2].y};
+  var a=[g0].concat(src,[gN]),out=[];
+  for(var i=1;i<a.length-2;i++){
+    var p0=a[i-1],p1=a[i],p2=a[i+1],p3=a[i+2];
+    for(var j=(i===1?0:1);j<=n;j++){
+      var t=j/n,t2=t*t,t3=t2*t;
+      out.push({
+        x:.5*((2*p1.x)+(-p0.x+p2.x)*t+(2*p0.x-5*p1.x+4*p2.x-p3.x)*t2+(-p0.x+3*p1.x-3*p2.x+p3.x)*t3),
+        y:.5*((2*p1.y)+(-p0.y+p2.y)*t+(2*p0.y-5*p1.y+4*p2.y-p3.y)*t2+(-p0.y+3*p1.y-3*p2.y+p3.y)*t3)
+      });
+    }
+  }
+  return out;
+}
+
+function nums(t){ return t.trim().split(/[\s,;]+/).map(Number).filter(isFinite); }
+
+// ── plot ──────────────────────────────────────────────────
+function doPlot(){
+  var en=nums(document.getElementById('eIn').value);
+  var sn=nums(document.getElementById('sIn').value);
+  var msg=document.getElementById('msg');
+  if(!en.length||!sn.length){msg.textContent='! MISSING DATA';msg.style.color='#e04030';return;}
+  if(en.length!==sn.length){msg.textContent='! MISMATCH '+en.length+'/'+sn.length;msg.style.color='#e04030';return;}
+  if(en.length<2){msg.textContent='! NEED ≥2 PTS';msg.style.color='#e04030';return;}
+  msg.textContent='◈ '+en.length+' PTS LOADED'; msg.style.color='#a8d458';
+
+  raw=en.map(function(e,i){return{e:e,s:sn[i]};}).sort(function(a,b){return a.e-b.e;});
+  sel=[null,null]; mode=0;
+  spPts=catmullRom(raw.map(function(p){return{x:p.e,y:p.s};}));
+
+  var xs=raw.map(function(p){return p.e;});
+  var ys=raw.map(function(p){return p.s;});
+  var xt=niceTicks(0,Math.max.apply(null,xs)*1.08,14);
+  var yt=niceTicks(0,Math.max.apply(null,ys)*1.08,12);
+  fX={min:0,max:xt.ticks[xt.ticks.length-1]};
+  fY={min:0,max:yt.ticks[yt.ticks.length-1]};
+  vX={min:fX.min,max:fX.max}; vY={min:fY.min,max:fY.max};
+  pxPerUnit=50; sizeCanvas(); buildTable(); draw();
+  document.getElementById('btnRZ').style.display='';
+  document.getElementById('hint').style.display='';
+  setStatus('◈ TARGETING MODE — SELECT POINT ALPHA ON CHART','');
+  updateCards();
+}
+
+function doDemo(){
+  document.getElementById('eIn').value='0.02\n0.20\n0.50\n1.00\n1.50\n2.00\n2.50\n3.00\n3.50\n4.00\n5.00\n6.00\n7.00\n8.00\n9.00\n10.00\n11.00\n12.00\n13.00';
+  document.getElementById('sIn').value='0.04\n0.40\n0.98\n1.95\n2.90\n4.20\n5.80\n7.00\n7.90\n8.30\n8.55\n8.60\n8.55\n8.50\n8.42\n8.35\n8.25\n8.15\n8.05';
+  doPlot();
+}
+
+function doClear(){
+  document.getElementById('eIn').value=''; document.getElementById('sIn').value='';
+  raw=[]; sel=[null,null]; mode=0; spPts=[];
+  document.getElementById('msg').textContent='';
+  document.getElementById('tb').innerHTML='';
+  ['v1','v2','vE'].forEach(function(id){document.getElementById(id).textContent='---';});
+  document.getElementById('s1').textContent='SELECT ON CHART';
+  document.getElementById('s2').textContent='SELECT ON CHART';
+  document.getElementById('sE').textContent='MPa';
+  document.getElementById('btnRZ').style.display='none';
+  document.getElementById('hint').style.display='none';
+  setStatus('▶ AWAITING INPUT — ENTER DATA AND EXECUTE PLOT','');
+  sizeCanvas(); draw();
+}
+
+// ── save / load ───────────────────────────────────────────
+function openSaveDialog(){
+  var eVals=document.getElementById('eIn').value.trim();
+  var sVals=document.getElementById('sIn').value.trim();
+  if(!eVals||!sVals){
+    document.getElementById('msg').textContent='! NO DATA';
+    document.getElementById('msg').style.color='#e04030';
+    return;
+  }
+  var defaultName='modulus_'+new Date().toISOString().slice(0,10)+'.json';
+  document.getElementById('saveFilename').value=defaultName;
+  var modal=document.getElementById('saveModal');
+  modal.style.display='flex';
+  setTimeout(function(){
+    document.getElementById('saveFilename').focus();
+    document.getElementById('saveFilename').select();
+  },50);
+}
+
+function closeSaveDialog(){
+  document.getElementById('saveModal').style.display='none';
+}
+
+function buildPayload(){
+  return JSON.stringify({
+    version:'modulus_v4_8',author:'Sinisa Svoger',
+    saved:new Date().toISOString(),
+    strain:document.getElementById('eIn').value.trim(),
+    stress:document.getElementById('sIn').value.trim(),
+    sel0:sel[0]?{e:sel[0].e,s:sel[0].s,i:sel[0].i}:null,
+    sel1:sel[1]?{e:sel[1].e,s:sel[1].s,i:sel[1].i}:null
+  },null,2);
+}
+
+function confirmSave(){
+  var name=document.getElementById('saveFilename').value.trim()||'modulus_data';
+  if(!name.toLowerCase().endsWith('.json')) name+='.json';
+  var json=buildPayload();
+  var blob=new Blob([json],{type:'application/json'});
+  var msg=document.getElementById('msg');
+
+  if(typeof window.showSaveFilePicker==='function'){
+    // Modern browsers: native OS Save As dialog
+    window.showSaveFilePicker({
+      suggestedName: name,
+      types:[{description:'Modulus JSON File',accept:{'application/json':['.json']}}],
+      excludeAcceptAllOption: false
+    }).then(function(handle){
+      return handle.createWritable();
+    }).then(function(writable){
+      return writable.write(blob).then(function(){ return writable.close(); });
+    }).then(function(){
+      closeSaveDialog();
+      msg.textContent='▼ FILE SAVED';
+      msg.style.color='#70a0d8';
+      setTimeout(function(){msg.textContent='';},2500);
+    }).catch(function(err){
+      // AbortError = user cancelled = do nothing
+      if(err.name!=='AbortError'){
+        // Other error = fall back to download
+        downloadFallback(blob,name,msg);
+      }
+    });
+  } else {
+    // Firefox / Safari / file:// fallback
+    downloadFallback(blob,name,msg);
+  }
+}
+
+function downloadFallback(blob,filename,msg){
+  var a=document.createElement('a');
+  var url=URL.createObjectURL(blob);
+  a.href=url; a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); document.body.removeChild(a); },100);
+  closeSaveDialog();
+  if(msg){ msg.textContent='▼ SAVED (DOWNLOADS)'; msg.style.color='#70a0d8'; setTimeout(function(){msg.textContent='';},2500); }
+}
+
+// Close on backdrop click
+document.getElementById('saveModal').addEventListener('click',function(e){
+  if(e.target===this) closeSaveDialog();
+});
+// Keyboard shortcuts in filename field
+document.getElementById('saveFilename').addEventListener('keydown',function(e){
+  if(e.key==='Enter') confirmSave();
+  if(e.key==='Escape') closeSaveDialog();
+});
+
+
+function doLoad(event){
+  var file=event.target.files[0]; if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var d=JSON.parse(e.target.result);
+      if(!d.strain||!d.stress) throw new Error('bad');
+      document.getElementById('eIn').value=d.strain;
+      document.getElementById('sIn').value=d.stress;
+      doPlot();
+      if(d.sel0&&d.sel0.i!=null&&d.sel0.i<raw.length) sel[0]={e:raw[d.sel0.i].e,s:raw[d.sel0.i].s,i:d.sel0.i};
+      if(d.sel1&&d.sel1.i!=null&&d.sel1.i<raw.length) sel[1]={e:raw[d.sel1.i].e,s:raw[d.sel1.i].s,i:d.sel1.i};
+      updateCards(); draw();
+      document.getElementById('msg').textContent='▲ LOADED: '+file.name.toUpperCase();
+      document.getElementById('msg').style.color='#70a0d8';
+      setTimeout(function(){document.getElementById('msg').textContent='';},3000);
+    }catch(err){document.getElementById('msg').textContent='! READ ERROR';document.getElementById('msg').style.color='#e04030';}
+    event.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+// ── table / pick ──────────────────────────────────────────
+function buildTable(){
+  var tb=document.getElementById('tb'); tb.innerHTML='';
+  raw.forEach(function(p,i){
+    var tr=document.createElement('tr'); tr.id='r'+i;
+    tr.innerHTML='<td>'+(i+1)+'</td><td>'+fmt(p.e)+'</td><td>'+fmt(p.s)+'</td>';
+    (function(idx){tr.onclick=function(){pick(idx);};})(i);
+    tb.appendChild(tr);
+  });
+}
+function pick(i){
+  sel[mode]={e:raw[i].e,s:raw[i].s,i:i};
+  mode=mode===0?1:0;
+  updateCards(); draw();
+}
+function resetPts(){
+  sel=[null,null]; mode=0;
+  setStatus(raw.length?'◈ TARGETING MODE — SELECT POINT ALPHA ON CHART':'▶ AWAITING INPUT — ENTER DATA AND EXECUTE PLOT','');
+  updateCards(); draw();
+}
+function resetZoom(){
+  pxPerUnit=50; vX={min:fX.min,max:fX.max}; vY={min:fY.min,max:fY.max};
+  sizeCanvas(); draw();
+}
+function setStatus(txt,cls){
+  var el=document.getElementById('status'); el.textContent=txt; el.className=cls||'';
+}
+function updateCards(){
+  document.getElementById('v1').textContent=sel[0]?'ε='+fmt(sel[0].e)+'% σ='+fmt(sel[0].s):'---';
+  document.getElementById('s1').textContent=sel[0]?'PT '+(sel[0].i+1):'SELECT ON CHART';
+  document.getElementById('v2').textContent=sel[1]?'ε='+fmt(sel[1].e)+'% σ='+fmt(sel[1].s):'---';
+  document.getElementById('s2').textContent=sel[1]?'PT '+(sel[1].i+1):'SELECT ON CHART';
+  if(sel[0]&&sel[1]){
+    var de=sel[1].e-sel[0].e,ds=sel[1].s-sel[0].s;
+    if(Math.abs(de)<1e-14){document.getElementById('vE').textContent='Δε≈0';document.getElementById('sE').textContent='';}
+    else{document.getElementById('vE').textContent=fmt((ds/de)*100)+' MPa';document.getElementById('sE').textContent='E = (Δσ/Δε) × 100';}
+    setStatus('◈ MODULUS ACQUIRED — MISSION COMPLETE','ok');
+  } else {
+    document.getElementById('vE').textContent='---'; document.getElementById('sE').textContent='MPa';
+    if(sel[0]) setStatus('▶ ALPHA LOCKED — SELECT POINT BETA TO COMPUTE','');
+  }
+  raw.forEach(function(_,i){
+    var tr=document.getElementById('r'+i); if(!tr) return;
+    tr.className=(sel[0]&&sel[0].i===i)?'s1':(sel[1]&&sel[1].i===i)?'s2':'';
+  });
+}
+
+sizeCanvas(); draw();
+</script>
+
+<!-- SAVE DIALOG MODAL -->
+<div id="saveModal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.78);align-items:center;justify-content:center">
+  <div style="background:#111a0d;border:2px solid #2a3d1a;box-shadow:inset 1px 1px 0 #3a5020,inset -1px -1px 0 #060a04,4px 4px 0 #000;min-width:380px;max-width:500px;width:90%">
+    <div style="background:#1e4010;color:#a8d458;font-size:11px;letter-spacing:3px;text-transform:uppercase;padding:5px 10px;border-bottom:2px solid #2a3d1a;display:flex;justify-content:space-between;align-items:center">
+      <span>▼ SAVE DATA FILE</span>
+      <span style="cursor:pointer;color:#5a7040;font-size:14px" onclick="closeSaveDialog()">✕</span>
+    </div>
+    <div style="padding:16px 14px">
+      <div style="font-size:9px;letter-spacing:2px;color:#5a7040;text-transform:uppercase;margin-bottom:5px">◈ FILE NAME</div>
+      <input id="saveFilename" type="text"
+        style="width:100%;font-family:'Share Tech Mono',monospace;font-size:13px;background:#060e04;color:#a8d458;border:2px solid #2a3d1a;box-shadow:inset 1px 1px 0 #000;padding:6px 8px;letter-spacing:1px;outline:none"
+        placeholder="modulus_data.json">
+      <div style="font-size:9px;letter-spacing:1px;color:#3a5018;margin-top:5px">.json extension added automatically if omitted</div>
+      <div style="font-size:9px;letter-spacing:1px;color:#5a7040;margin-top:10px;line-height:1.7">
+        Clicking <b style="color:#72a830">▼ SAVE FILE</b> opens your OS save dialog.<br>
+        Navigate to any folder and confirm to save.
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+        <button class="xc-btn" onclick="closeSaveDialog()">✕ CANCEL</button>
+        <button class="xc-btn primary" onclick="confirmSave()">▼ SAVE FILE</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</body>
+</html>
